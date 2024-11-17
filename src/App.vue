@@ -1,10 +1,12 @@
 <script lang="ts" setup>
-import Mail from './components/Mail.vue'
-import { accounts, mails } from './data/mails'
+import { onMounted } from "vue";
+// import Mail from './components/Mail.vue'
+// import { accounts, mails } from './data/mails'
+import GameMain from './components/GameMain.vue';
 </script>
 
 <template>
-  <div class="md:hidden">
+  <!-- <div class="md:hidden">
     <image
       src="/examples/mail-dark.png"
       :width="1280"
@@ -26,5 +28,6 @@ import { accounts, mails } from './data/mails'
       :mails="mails"
       :nav-collapsed-size="4"
     />
-  </div>
+  </div> -->
+  <GameMain />
 </template>
