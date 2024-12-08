@@ -2,6 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import autoprefixer from 'autoprefixer'
 import tailwind from 'tailwindcss'
+import postcssNesting from 'postcss-nesting';
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
@@ -10,7 +11,11 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   css: {
     postcss: {
-      plugins: [tailwind(), autoprefixer()],
+      plugins: [
+        tailwind(),
+        autoprefixer(),
+        postcssNesting
+      ],
     },
   },
   plugins: [

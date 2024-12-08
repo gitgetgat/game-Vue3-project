@@ -22,8 +22,10 @@
   "devDependencies": {
     "@iconify-json/radix-icons": "^1.2.1",
     "@iconify/vue": "^4.1.2",
+    "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
     "@vitejs/plugin-vue": "^5.1.4",
     "autoprefixer": "^10.4.20",
+    "postcss-nesting": "^13.0.1",
     "tailwindcss": "^3.4.14",
     "vite": "^5.4.9"
   }

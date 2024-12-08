@@ -1,18 +1,19 @@
 const animate = require("tailwindcss-animate")
+const nesting = require("@tailwindcss/nesting")
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
   safelist: ["dark"],
   prefix: "",
-  
+
   content: [
     './pages/**/*.{js,jsx,vue}',
     './components/**/*.{js,jsx,vue}',
     './app/**/*.{js,jsx,vue}',
     './src/**/*.{js,jsx,vue}',
-	],
-  
+  ],
+
   theme: {
     container: {
       center: true,
@@ -23,6 +24,12 @@ module.exports = {
     },
     extend: {
       colors: {
+        // 'equipment-common': '#ffffff',
+        // 'equipment-uncommon': '#1eff00',
+        // 'equipment-rare': '#0070dd',
+        // 'equipment-epic': '#a335ee',
+        // 'equipment-legendary': '#ffd700',
+        // 'equipment-heirloom': '#e30b5c',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -89,5 +96,5 @@ module.exports = {
       },
     },
   },
-  plugins: [animate],
+  plugins: [animate, nesting],
 }

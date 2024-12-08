@@ -1,0 +1,16 @@
+.hover-button {
+  @apply hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all duration-300;
+}
+.hover-menu-button {
+  @apply text-center px-4 py-1 cursor-pointer border rounded-lg hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base mx-0  min-w-fit mb-2 !important;
+}
+.top-panel-menu-button {
+  @apply shrink-0 px-1 py-1 cursor-pointer rounded-lg;
+}
+.mid-panel-box {
+  @apply flex-1 border rounded-lg px-2 py-2;
+
+  .mid-panel-title {
+    @apply font-bold;
+  }
+}
