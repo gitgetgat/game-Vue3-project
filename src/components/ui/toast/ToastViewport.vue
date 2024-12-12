@@ -1,11 +1,11 @@
 <script setup>
 import { cn } from '@/lib/utils';
-import { TabsContent } from 'radix-vue';
+import { ToastViewport } from 'radix-vue';
 import { computed } from 'vue';
 
 const props = defineProps({
-  value: { type: [String, Number], required: true },
-  forceMount: { type: Boolean, required: false },
+  hotkey: { type: Array, required: false },
+  label: { type: [String, Function], required: false },
   asChild: { type: Boolean, required: false },
   as: { type: null, required: false },
   class: { type: null, required: false },
@@ -19,15 +19,13 @@ const delegatedProps = computed(() => {
 </script>
 
 <template>
-  <TabsContent
+  <ToastViewport
+    v-bind="delegatedProps"
     :class="
       cn(
-        'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]',
         props.class,
       )
     "
-    v-bind="delegatedProps"
-  >
-    <slot />
-  </TabsContent>
+  />
 </template>

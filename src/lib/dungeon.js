@@ -38,7 +38,7 @@ const generateBasicMap = () => {
     dungeonAction: "", // 地图是否行动文本
     dungeonActivity: "", // 地图是否暂停文本
     dungeonTimer: null, // 地图时间循环器
-    dungeonEnentTime: 3000, // 地图时间循环器时间
+    dungeonEnentTime: 1000, // 地图时间循环器时间
   };
 }
 
@@ -293,6 +293,70 @@ const initialDungeonLoad = (gameMain) => {
   return map
 }
 
+
+
+// Start the game
+export const enterDungeon = (gameMain) => {
+  const { player } = gameMain;
+  if (player.inCombat) {
+    startCombat(gameMain);
+  } else {
+  }
+  if (player.stats.hp == 0) {
+    progressReset(gameMain);
+  }
+  initialDungeonLoad(gameMain);
+  playerLoadStats(gameMain);
+}
+
+
+// Resets the progress back to start
+const progressReset = (gameMain) => {
+  gameMain.player.stats.hp = gameMain.player.stats.hpMax;
+  gameMain.player.lvl = 1;
+  gameMain.player.blessing = 1;
+  gameMain.player.exp = {
+    expCurr: 0,
+    expMax: 100,
+    expCurrLvl: 0,
+    expMaxLvl: 100,
+    lvlGained: 0
+  };
+  gameMain.player.bonusStats = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    atkSpd: 0,
+    vamp: 0,
+    critRate: 0,
+    critDmg: 0
+  };
+  gameMain.player.skills = [];
+  gameMain.player.inCombat = false;
+  gameMain.map.progress.floor = 1;
+  gameMain.map.progress.room = 1;
+  gameMain.map.statistics.kills = 0;
+  gameMain.map.backlog.length = 0;
+  gameMain.map.action = 0;
+  gameMain.map.statistics.runtime = 0;
+  gameMain.map.status = {
+    event: false,
+    eventType: '',
+    exploring: false,
+    paused: true,
+  };
+  gameMain.map.settings = {
+    enemyBaseLvl: 1,
+    enemyLvlGap: 5,
+    enemyBaseStats: 1,
+    enemyScaling: 1.1,
+  };
+  delete gameMain.map.enemyMultipliers;
+  delete gameMain.player.allocated;
+  gameMain.combat.combatBacklog.length = 0;
+  saveData();
+}
+
 // 启动和暂停地图状态
 const dungeonToggleStartPause = (map) => {
   dungeonStartPause(map)
@@ -443,7 +507,7 @@ const engageBattle = (gameMain) => {
 const endBattle = (gameMain) => {
   gameMain.map.status.event = false;
   gameMain.enemyDead = false;
-  gameMain.value.combat.enemyCurrId = -1;
+  gameMain.combat.enemyCurrId = -1;
   gameMain.combat.combatBacklog.length = 0;
   gameMain.combat.combatLoot.length = 0;
   gameMain.map.enemyBattleList.length = 0;
@@ -554,21 +618,21 @@ const ignoreEvent = (map) => {
 
 // 打开仓库
 const openInventory = (gameMain) => {
-  gameMain.dungeon.status.exploring = false;
+  gameMain.map.status.exploring = false;
   gameMain.inventoryOpen = true;
 }
 
 // 关闭仓库
 const closeInventory = (gameMain) => {
   gameMain.inventoryOpen = false;
-  if (!gameMain.dungeon.status.paused) {
-    gameMain.dungeon.status.exploring = true;
+  if (!gameMain.map.status.paused) {
+    gameMain.map.status.exploring = true;
   }
 }
 
 // 如果库存未打开且游戏未暂停，则继续探索
 export const continueExploring = (gameMain) => {
-  if (!gameMain.inventoryOpen && !gameMain.dungeon.status.paused) {
+  if (!gameMain.inventoryOpen && !gameMain.map.status.paused) {
     gameMain.dungeon.status.exploring = true;
   }
 }

@@ -79,6 +79,10 @@ module.exports = {
         sm: "calc(var(--radius) - 4px)",
       },
       keyframes: {
+        flash: {
+          '0%, 50%, 100%': { opacity: 1 },
+          '25%, 75%': { opacity: 0 },
+        },
         "accordion-down": {
           from: { height: 0 },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -101,6 +105,7 @@ module.exports = {
         "accordion-up": "accordion-up 0.2s ease-out",
         "collapsible-down": "collapsible-down 0.2s ease-in-out",
         "collapsible-up": "collapsible-up 0.2s ease-in-out",
+        'flash': 'flash 1.5s infinite',
       },
     },
   },

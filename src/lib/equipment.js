@@ -14,6 +14,7 @@ export const createEquipment = (gameMain) => {
     tier: null, // 装备品阶
     value: null, // 装备售价
     stats: [],
+    id: uuidv4()
   };
 
   // 生成随机装备属性
@@ -185,12 +186,12 @@ export const createEquipment = (gameMain) => {
     icon: equipmentIcon(equipment.category.value),
     stats: equipment.stats,
     statsTransform: equipmentStatsTransform(equipment.stats),
-    id: uuidv4()
+    id: equipment.id
   }
   return itemShow;
 }
 
-const equipmentStatsTransform = (stats) => {
+export const equipmentStatsTransform = (stats) => {
   let statsObj = {}
   stats.forEach(e => {
     statsObj = {
@@ -204,7 +205,7 @@ const equipmentStatsTransform = (stats) => {
   })
 }
 
-const equipmentIcon = (equipment) => {
+export const equipmentIcon = (equipment) => {
   return equipmentIcons[equipment]
 }
 
@@ -245,6 +246,45 @@ export const sellEquipment = (gameMain, type, equipment, id) => {
   playerLoadStats(gameMain);
   // saveData();
   // continueExploring();
+}
+
+
+export const sellAll = (gameMain, rarity) => {
+  const { player } = gameMain;
+  if (rarity == "All") {
+    if (player.inventory.equipment.length !== 0) {
+      sfxSell.play();
+      for (let i = 0; i < player.inventory.equipment.length; i++) {
+        const equipment = JSON.parse(player.inventory.equipment[i]);
+        player.gold += equipment.value;
+        player.inventory.equipment.splice(i, 1);
+        i--;
+      }
+      playerLoadStats(gameMain);
+      // saveData();
+    }
+  } else {
+    let rarityCheck = false;
+    for (let i = 0; i < player.inventory.equipment.length; i++) {
+      const equipment = JSON.parse(player.inventory.equipment[i]);
+      if (equipment.rarity === rarity) {
+        rarityCheck = true;
+        break;
+      }
+    }
+    if (rarityCheck) {
+      for (let i = 0; i < player.inventory.equipment.length; i++) {
+        const equipment = JSON.parse(player.inventory.equipment[i]);
+        if (equipment.rarity === rarity) {
+          player.gold += equipment.value;
+          player.inventory.equipment.splice(i, 1);
+          i--;
+        }
+      }
+      playerLoadStats(gameMain);
+      // saveData();
+    }
+  }
 }
 
 // 将装备统计数据应用于玩家

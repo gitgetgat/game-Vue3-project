@@ -42,14 +42,7 @@ export const nFormatter = (num) => {
 }
 
 // 将所有数据保存到本地存储
-export const saveData = ({ player, map, enemy, volume }) => {
-  return
-  const playerData = player ? JSON.stringify(player) : '';
-  const mapData = map ? JSON.stringify(map) : '';
-  const enemyData = enemy ? JSON.stringify(enemy) : '';
-  const volumeData = volume ? JSON.stringify(volume) : '';
-  playerData && localStorage.setItem("playerData", playerData);
-  mapData && localStorage.setItem("mapData", mapData);
-  enemyData && localStorage.setItem("enemyData", enemyData);
-  volumeData && localStorage.setItem("volumeData", volumeData);
+export const saveData = (gameMain) => {
+  const gameMainData = JSON.stringify(gameMain);
+  localStorage.setItem("gameMain", gameMainData);
 }
