@@ -133,10 +133,10 @@ export const generateRandomEnemy = (condition, map) => {
   // 处理特殊怪物的名称，后需要加什么特殊的怪物可以添加
   if (condition == "chest") {
     // 宝箱怪
-    enemy.name = "Mimic";
+    enemy.name = "模仿者";
   } else if (condition == "door") {
     // 模仿门怪
-    enemy.name = "Door Mimic";
+    enemy.name = "大门模拟者";
   }
   setEnemyImg(enemy);
   return enemy
@@ -318,101 +318,101 @@ const setEnemyImg = (enemy) => {
   enemy.image.type = '.png';
   switch (enemy.name) {
     // Goblins
-    case 'Goblin':
+    case '哥布林':
       enemy.image.name = 'goblin';
       enemy.image.size = '50%';
       break;
-    case 'Goblin Rogue':
+    case '哥布林流氓':
       enemy.image.name = 'goblin_rogue';
       enemy.image.size = '50%';
       break;
-    case 'Goblin Archer':
+    case '哥布林弓箭手':
       enemy.image.name = 'goblin_archer';
       enemy.image.size = '50%';
       break;
-    case 'Goblin Mage':
+    case '哥布林流氓':
       enemy.image.name = 'goblin_mage';
       enemy.image.size = '50%';
       break;
 
     // Wolf
-    case 'Wolf':
+    case '狼':
       enemy.image.name = 'wolf';
       enemy.image.size = '50%';
       break;
-    case 'Black Wolf':
+    case '黑狼':
       enemy.image.name = 'wolf_black';
       enemy.image.size = '50%';
       break;
-    case 'Winter Wolf':
+    case '冬狼':
       enemy.image.name = 'wolf_winter';
       enemy.image.size = '50%';
       break;
 
     // Slime
-    case 'Slime':
+    case '史莱姆':
       enemy.image.name = 'slime';
       enemy.image.size = '50%';
       break;
-    case 'Angel Slime':
+    case '天使史莱姆':
       enemy.image.name = 'slime_angel';
       enemy.image.size = '50%';
       break;
-    case 'Knight Slime':
+    case '骑士史莱姆':
       enemy.image.name = 'slime_knight';
       enemy.image.size = '50%';
       break;
-    case 'Crusader Slime':
+    case '十字军史莱姆':
       enemy.image.name = 'slime_crusader';
       enemy.image.size = '50%';
       break;
 
     // Orc
-    case 'Orc Swordsmaster':
+    case '兽人剑师':
       enemy.image.name = 'orc_swordsmaster';
       enemy.image.size = '50%';
       break;
-    case 'Orc Axe':
+    case '兽人刀斧手':
       enemy.image.name = 'orc_axe';
       enemy.image.size = '50%';
       break;
-    case 'Orc Archer':
+    case '兽人弓箭手':
       enemy.image.name = 'orc_archer';
       enemy.image.size = '50%';
       break;
-    case 'Orc Mage':
+    case '兽人法师':
       enemy.image.name = 'orc_mage';
       enemy.image.size = '50%';
       break;
 
     // Spider
-    case 'Spider':
+    case '蜘蛛':
       enemy.image.name = 'spider';
       enemy.image.size = '50%';
       break;
-    case 'Red Spider':
+    case '红蜘蛛':
       enemy.image.name = 'spider_red';
       enemy.image.size = '50%';
       break;
-    case 'Green Spider':
+    case '绿蜘蛛':
       enemy.image.name = 'spider_green';
       enemy.image.size = '50%';
       break;
 
     // Skeleton
-    case 'Skeleton Archer':
+    case '骷髅弓箭手':
       enemy.image.name = 'skeleton_archer';
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Swordsmaster':
+    case '骷髅剑师':
       enemy.image.name = 'skeleton_swordsmaster';
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Knight':
+    case '骷髅骑士':
       enemy.image.name = 'skeleton_knight';
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Mage':
+    case '骷髅法师':
       if (randomizeNum(1, 2) == 1) {
         enemy.image.name = 'skeleton_mage1';
       } else {
@@ -420,125 +420,125 @@ const setEnemyImg = (enemy) => {
       }
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Pirate':
+    case '骷髅海盗':
       enemy.image.name = 'skeleton_pirate';
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Samurai':
+    case '骷髅武士':
       enemy.image.name = 'skeleton_samurai';
       enemy.image.size = '50%';
       break;
-    case 'Skeleton Warrior':
+    case '骷髅战士':
       enemy.image.name = 'skeleton_warrior';
       enemy.image.size = '50%';
       break;
 
     // Mimic
-    case 'Mimic':
+    case '模仿者':
       enemy.image.name = 'mimic';
       enemy.image.size = '50%';
       break;
-    case 'Door Mimic':
+    case '大门模拟者':
       enemy.image.name = 'mimic_door';
       enemy.image.size = '50%';
       break;
 
     // Bosses
-    case 'Zaart, the Dominator Goblin':
+    case '萨尔特，哥布林的主宰者':
       enemy.image.name = 'goblin_boss';
       enemy.image.size = '70%';
       break;
-    case 'Banshee, Skeleton Lord':
+    case '女妖，骷髅王':
       enemy.image.name = 'skeleton_boss';
       enemy.image.size = '50%';
       break;
-    case 'Molten Spider':
+    case '熔岩蜘蛛':
       enemy.image.name = 'spider_fire';
       enemy.image.size = '50%';
       break;
-    case 'Cerberus Ptolemaios':
+    case '三头犬·托勒密奥斯':
       enemy.image.name = 'cerberus_ptolemaios';
       enemy.image.size = '50%';
       break;
-    case 'Hellhound Inferni':
+    case '地狱恶犬':
       enemy.image.name = 'hellhound';
       enemy.image.size = '50%';
       break;
-    case 'Berthelot, the Undead King':
+    case '贝特洛，不死之王':
       enemy.image.name = 'berthelot';
       enemy.image.size = '50%';
       break;
-    case 'Slime King':
+    case '史莱姆之王':
       enemy.image.name = 'slime_boss';
       enemy.image.size = '50%';
       break;
-    case 'Zodiac Cancer':
+    case '癌症星座':
       enemy.image.name = 'zodiac_cancer';
       enemy.image.size = '50%';
       break;
-    case 'Alfadriel, the Light Titan':
+    case '阿尔法德里尔，光之泰坦':
       enemy.image.name = 'alfadriel';
       enemy.image.size = '50%';
       break;
-    case 'Tiamat, the Dragon Knight':
+    case '提亚马特，龙骑士':
       enemy.image.name = 'tiamat';
       enemy.image.size = '50%';
       break;
-    case 'Nameless Fallen King':
+    case '无名堕落之王':
       enemy.image.name = 'fallen_king';
       enemy.image.size = '50%';
       break;
-    case 'Zodiac Aries':
+    case '白羊座':
       enemy.image.name = 'zodiac_aries';
       enemy.image.size = '50%';
       break;
-    case 'Clockwork Spider':
+    case '发条蜘蛛':
       enemy.image.name = 'spider_boss';
       enemy.image.size = '50%';
       break;
-    case 'Llyrrad, the Ant Queen':
+    case '利拉德，蚁后':
       enemy.image.name = 'ant_queen';
       enemy.image.size = '50%';
       break;
-    case 'Aragorn, the Lethal Wolf':
+    case '阿拉贡，致命之狼':
       enemy.image.name = 'wolf_boss';
       enemy.image.size = '50%';
       break;
 
     // Special Boss
-    case 'Naizicher, the Spider Dragon':
+    case '奈齐尔，蜘蛛龙':
       enemy.image.name = 'spider_dragon';
       enemy.image.size = '70%';
       break;
-    case 'Ulliot, the Deathlord':
+    case '死亡领主乌里奥特':
       enemy.image.name = 'skeleton_dragon';
       enemy.image.size = '70%';
       break;
-    case 'Ifrit':
+    case '幻灵之力':
       enemy.image.name = 'firelord';
       enemy.image.size = '70%';
       break;
-    case 'Shiva':
+    case '湿婆':
       enemy.image.name = 'icemaiden';
       enemy.image.size = '70%';
       break;
-    case 'Behemoth':
+    case '巨兽':
       enemy.image.name = 'behemoth';
       enemy.image.size = '70%';
       break;
-    case 'Blood Manipulation Feral':
+    case '血术野性':
       enemy.image.name = 'bm-feral';
       enemy.image.size = '70%';
       break;
-    case 'Thanatos':
+    case '桑纳托斯死神':
       enemy.image.name = 'thanatos';
       enemy.image.size = '70%';
       break;
-    case 'Darkness Angel Reaper':
+    case '黑暗天使收割者':
       enemy.image.name = 'da-reaper';
       enemy.image.size = '70%';
       break;
-    case 'Zalaras, the Dragon Emperor':
+    case '扎拉拉斯，龙王':
       enemy.image.name = 'zalaras';
       enemy.image.size = '70%';
       break;

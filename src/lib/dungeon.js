@@ -1,6 +1,6 @@
 import { generateRandomEnemy } from "./enemy.js";
 import { createEquipmentPrint } from "./equipment.js";
-import { nFormatter, randomizeNum, randomizeDecimal } from "./utils.js";
+import { nFormatter, randomizeNum, randomizeDecimal, saveData } from "./utils.js";
 import { playerLoadStats } from "./player.js"
 import { startCombat, addCombatLog } from "./combat.js"
 const generateBasicMap = () => {
@@ -267,22 +267,22 @@ const dungeonEvent = (gameMain) => {
 // 创建初始地图
 const initialDungeonLoad = (gameMain) => {
   let map = null
-  if (false && localStorage.getItem("mapData") !== null) {
-    map = JSON.parse(localStorage.getItem("mapData"));
-    map.status = {
-      exploring: false,
-      paused: true,
-      event: false,
-    };
+  if (gameMain.map) {
+    // gameMain.map = JSON.parse(localStorage.getItem("mapData"));
+    // gameMain.map.status = {
+    //   exploring: false,
+    //   paused: true,
+    //   event: false,
+    // };
     // updateDungeonLog();
   } else {
     map = generateBasicMap();
+    gameMain.map = map;
   }
-  loadDungeonProgress(map);
+  loadDungeonProgress(gameMain.map);
 
-  map.dungeonAction = "休息中";
-  map.dungeonActivity = "探索";
-  gameMain.map = map;
+  gameMain.map.dungeonAction = "休息中";
+  gameMain.map.dungeonActivity = "探索";
   gameMain.map.dungeonTimer = setInterval(() => {
     dungeonEvent(gameMain)
   }, gameMain.map.dungeonEnentTime);
@@ -298,10 +298,10 @@ const initialDungeonLoad = (gameMain) => {
 // Start the game
 export const enterDungeon = (gameMain) => {
   const { player } = gameMain;
-  if (player.inCombat) {
-    startCombat(gameMain);
-  } else {
-  }
+  // if (player.inCombat) {
+  //   startCombat(gameMain);
+  // } else {
+  // }
   if (player.stats.hp == 0) {
     progressReset(gameMain);
   }
@@ -311,7 +311,7 @@ export const enterDungeon = (gameMain) => {
 
 
 // Resets the progress back to start
-const progressReset = (gameMain) => {
+export const progressReset = (gameMain) => {
   gameMain.player.stats.hp = gameMain.player.stats.hpMax;
   gameMain.player.lvl = 1;
   gameMain.player.blessing = 1;
@@ -332,7 +332,9 @@ const progressReset = (gameMain) => {
     critDmg: 0
   };
   gameMain.player.skills = [];
+  gameMain.player.selectedStats = [];
   gameMain.player.inCombat = false;
+  gameMain.map.enemyBattleList.length = 0;
   gameMain.map.progress.floor = 1;
   gameMain.map.progress.room = 1;
   gameMain.map.statistics.kills = 0;
@@ -353,8 +355,15 @@ const progressReset = (gameMain) => {
   };
   delete gameMain.map.enemyMultipliers;
   delete gameMain.player.allocated;
-  gameMain.combat.combatBacklog.length = 0;
-  saveData();
+  gameMain.playerDead = false;
+  gameMain.combat = {
+    combatSeconds: 0,
+    combatTimer: null,
+    enemyCurrId: -1,
+    combatBacklog: [],
+    combatLoot: [],
+  }
+  saveData(gameMain);
 }
 
 // 启动和暂停地图状态
@@ -386,6 +395,7 @@ const dungeonCounter = (gameMain) => {
   gameMain.player.playtime++;
   gameMain.map.statistics.runtime++;
   gameMain.dungeonTime += 1000;
+  saveData(gameMain)
 }
 
 // 加载楼层和房间数量
@@ -547,11 +557,13 @@ const chestEvent = (gameMain) => {
   } else if (eventRoll == 2) {
     if (map.progress.floor == 1) {
       goldDrop(gameMain);
+      map.status.event = false;
+      gameMain.map.status.eventType = ''
     } else {
       createEquipmentPrint("dungeon", gameMain);
+      gameMain.map.status.event = true;
+      gameMain.map.status.eventType = 'equipment'
     }
-    map.status.event = false;
-    gameMain.map.status.eventType = ''
   } else if (eventRoll == 3) {
     goldDrop(gameMain);
     map.status.event = false;
@@ -631,9 +643,9 @@ const closeInventory = (gameMain) => {
 }
 
 // 如果库存未打开且游戏未暂停，则继续探索
-export const continueExploring = (gameMain) => {
+const continueExploring = (gameMain) => {
   if (!gameMain.inventoryOpen && !gameMain.map.status.paused) {
-    gameMain.dungeon.status.exploring = true;
+    gameMain.map.status.exploring = true;
   }
 }
 
@@ -646,5 +658,7 @@ export {
   endBattle,
   chestEvent,
   ignoreEvent,
+  continueExploring,
+  addDungeonLog,
   offerBlessingEvent
 }

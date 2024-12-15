@@ -1,101 +1,30 @@
 <script lang="ts" setup>
 import {
   // vue
-  onMounted, ref, watchEffect, computed,
+  onMounted, ref, watchEffect, computed, nextTick, provide,
   // components
   Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel,
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogOverlay, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogFooter, AlertDialogAction,
   Button, Icon, ScrollArea, Accordion, AccordionContent, AccordionItem, AccordionTrigger,
   Label, Input, Switch, Skeleton, HoverCard, HoverCardContent, HoverCardTrigger,
   NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput, VisuallyHidden,
   Toaster, X,
   // functions
   useColorMode, useToast,
-  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, saveData,
+  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, unequipAll,
   // config
   equipmentRarityList, skillsDesc, prefixNames, names, skills,
 } from '../lib/import'
+import equipmentShow from './EquipmentShow.vue'
+import saleEquipment from './SaleEquipment.vue'
+import failedGameAlertDialog from './FailedGameAlertDialog.vue'
+import AttributePanel from './AttributePanel.vue'
+import CombatPanel from './CombatPanel.vue'
+import LevelUpPanel from './LevelUpPanel.vue'
 import dayjs from 'dayjs'
-
-// toast 调用
-const { toast } = useToast()
-
-// 装备稀有度
-const equipmentCategoriesFilterList = equipmentRarityList
-
-// loading
-let gameMainLoading = ref(true)
-let coverLoading = ref(true)
-
-const mode = useColorMode()
-const toggleState = ref(false)
-watchEffect(() => {
-  mode.value = toggleState.value ? 'light' : 'dark'
-})
-const equipmentSelectVal = ref('All') // 背包-装备类型下拉筛选
-const skillSelectVal = ref('Remnant Razor') // 背包-装备类型下拉筛选
-const equipmentSelectItem = computed(() => equipmentCategoriesFilterList.find(e => e.value === equipmentSelectVal.value)) // 背包-装备类型下拉筛选选中项
-const GameBeginSetConfigOpen = ref(false) // 初始配置菜单是否打开
-const menuBackpackOpen = ref(false) // 背包是否打开
-const gameCfgOpen = ref(false) // 游戏设置是否打开
-const menuCfgOpen = ref(false) // 菜单是否打开
-const combatOpen = ref(false) // 战斗窗口是否打开
-// 设置面板 begin
-const gameCfgDefaultVal = 'autoCombat' // 默认展开的设置面板
-// 设置面板 end
-
-// 地图计时器
-const dungeonTime = computed(() => dayjs(gameMain.value.dungeonTime + (new Date().getTimezoneOffset()) * 60 * 1000).format('HH:mm:ss'))
-
-// 当前敌人
-const currEnemy = computed(() => gameMain.value.map && gameMain.value.map.enemyBattleList.length && gameMain.value.combat.enemyCurrId >= 0 ? gameMain.value.map.enemyBattleList[gameMain.value.combat.enemyCurrId] : null)
-
-// 装备列表
-const backEquipmentList = computed(() => {
-  return gameMain.value.player.inventory.equipment.map(ele => {
-    const equipment = JSON.parse(ele)
-    console.log('equipment', equipment);
-    return {
-      raw: equipment,
-      category: equipment.category,
-      rarity: equipment.rarity,
-      lvl: equipment.lvl,
-      tier: equipment.tier,
-      icon: equipmentIcon(equipment.category.value),
-      stats: equipment.stats,
-      statsTransform: equipmentStatsTransform(equipment.stats),
-    }
-  }).filter(ele => equipmentSelectVal.value === 'All' ? true : ele.rarity === equipmentSelectVal.value)
-})
-
-// 技能列表
-const skillsList = ref(skills)
-
-const skillsDescList = ref(skillsDesc)
-
-let allocation = ref({
-  name: '',
-  hp: 5,
-  atk: 5,
-  def: 5,
-  atkSpd: 5
-})
-
-const openApplyDisable = computed(() => {
-  return 40 - (allocation.value.hp + allocation.value.atk + allocation.value.def + allocation.value.atkSpd)
-})
-
-const openApplyStats = computed(() => {
-  return {
-    hp: 50 * allocation.value.hp,
-    atk: 10 * allocation.value.atk,
-    def: 10 * allocation.value.def,
-    atkSpd: (40 + (2 * allocation.value.atkSpd)) / 100
-  }
-})
 
 let gameMain = ref({
   dungeonTime: 0,// 总游戏时长
@@ -162,8 +91,10 @@ let gameMain = ref({
       equipment: [], // 存放装备仓库
       equipmentLimit: 30 // 存放装备仓库数量限制
     },
+    selectedStats: [],// 升级时可选择的升级属性选项组
     equipped: [], // 装备栏
     equippedLimit: 6, // 装备栏数量限制
+    rerolls: 2, // 可以重置选取升级属性的次数
     gold: 0, // 金币数
     blessing: 1, // 祝福
     playtime: 0, // 游戏时长
@@ -189,6 +120,102 @@ let gameMain = ref({
     blessingN: false, // 灾厄雕像自动购买
   },
 })
+provide('gameMain', gameMain)
+// toast 调用
+const { toast } = useToast()
+const currShowEquipment = ref(null)
+const equipmentType = ref('Equip')
+const saleEquipmentTriggerType = ref('')
+// 装备稀有度
+const equipmentCategoriesFilterList = equipmentRarityList
+
+// loading
+let gameMainLoading = ref(true)
+let gameWindowLoading = ref(false)
+let coverLoading = ref(true)
+
+const mode = useColorMode()
+const toggleState = ref(false)
+watchEffect(() => {
+  mode.value = toggleState.value ? 'light' : 'dark'
+})
+const equipmentSelectVal = ref('All') // 背包-装备类型下拉筛选
+const skillSelectVal = ref('Remnant Razor') // 背包-装备类型下拉筛选
+const equipmentSelectItem = computed(() => equipmentCategoriesFilterList.find(e => e.value === equipmentSelectVal.value)) // 背包-装备类型下拉筛选选中项
+const GameBeginSetConfigOpen = ref(false) // 初始配置菜单是否打开
+const menuBackpackOpen = ref(false) // 背包是否打开
+const equipmentShowOpen = ref(false) // 装备展示是否打开
+const menuQuitOpen = ref(false) // 放弃本局是否打开
+const levelUpOpen = ref(false) // 升级窗口是否打开
+const saleEquipmentOpen = ref(false) // 出售装备是否打开
+const gameCfgOpen = ref(false) // 游戏设置是否打开
+const menuCfgOpen = ref(false) // 菜单是否打开
+const combatOpen = ref(false) // 战斗窗口是否打开
+// 设置面板 begin
+const gameCfgDefaultVal = 'autoCombat' // 默认展开的设置面板
+// 设置面板 end
+
+// 地图计时器
+const dungeonTime = computed(() => dayjs(gameMain.value.dungeonTime + (new Date().getTimezoneOffset()) * 60 * 1000).format('HH:mm:ss'))
+
+// 当前敌人
+const currEnemy = computed(() => gameMain.value.map && gameMain.value.map.enemyBattleList.length && gameMain.value.combat.enemyCurrId >= 0 ? gameMain.value.map.enemyBattleList[gameMain.value.combat.enemyCurrId] : null)
+
+// 装备列表
+const backEquipmentList = computed(() => {
+  return gameMain.value.player.inventory.equipment.map(ele => {
+    const equipment = JSON.parse(ele)
+    return {
+      raw: equipment,
+      category: equipment.category,
+      rarity: equipment.rarity,
+      lvl: equipment.lvl,
+      tier: equipment.tier,
+      icon: equipmentIcon(equipment.category.value),
+      stats: equipment.stats,
+      value: equipment.value,
+      statsTransform: equipmentStatsTransform(equipment.stats),
+    }
+  }).filter(ele => equipmentSelectVal.value === 'All' ? true : ele.rarity === equipmentSelectVal.value)
+})
+
+// 技能列表
+const skillsList = ref(skills)
+
+// 技能介绍列表
+const skillsDescList = ref(skillsDesc)
+
+// 属性分配
+let allocation = ref({
+  name: '',
+  hp: 5,
+  atk: 5,
+  def: 5,
+  atkSpd: 5
+})
+
+// 剩余属性分配点
+const openApplyDisable = computed(() => {
+  return 40 - (allocation.value.hp + allocation.value.atk + allocation.value.def + allocation.value.atkSpd)
+})
+
+// 已分配属性应用数值
+const openApplyStats = computed(() => {
+  return {
+    hp: 50 * allocation.value.hp,
+    atk: 10 * allocation.value.atk,
+    def: 10 * allocation.value.def,
+    atkSpd: (40 + (2 * allocation.value.atkSpd)) / 100
+  }
+})
+
+
+const getEquipmentStatsTransform = (val) => {
+  return equipmentStatsTransform(val)
+}
+const getIcon = (val) => {
+  return equipmentIcon(val)
+}
 // 获取装备稀有度名称
 const getRarityLabel = (val) => {
   return equipmentCategoriesFilterList.find(e => e.value === val).label
@@ -205,19 +232,36 @@ const handleDungeonToggleStartPause = () => {
 
 // 背包按钮
 const handleOpenBackpackCfg = () => {
-  equipmentSelectVal.value = 'Common'
+  equipmentSelectVal.value = 'All'
   menuBackpackOpen.value = true
 }
-// 菜单按钮
-const handleOpenMenuCfg = () => {
-  menuCfgOpen.value = true
+
+// 确认放弃按钮
+const handleFailedGame = () => {
+  clearInterval(gameMain.value.map.dungeonTimer);
+  clearInterval(gameMain.value.player.playTimer);
+  gameMain.value.player.inventory.equipment.length = 0;
+  gameMain.value.player.equipped.length = 0;
+  gameMain.value.player.gold = 0;
+  progressReset(gameMain.value);
+  localStorage.removeItem("gameMain");
+  skillSelectVal.value = 'Remnant Razor'
+  handleResetAttrPoints()
+
+  menuQuitOpen.value = false
+  GameBeginSetConfigOpen.value = false
+  coverLoading.value = true
+  gameMainLoading.value = false
+  gameWindowLoading.value = false
 }
+
 // 打开宝箱
 const handleOpenChest = () => {
   if (gameMain.value.map.status.eventType === 'treasure') {
     chestEvent(gameMain.value)
   }
 }
+
 // 进入战斗
 const handleEngageBattle = () => {
   console.log('handleEngageBattle eventType', gameMain.value.map.status.eventType);
@@ -225,6 +269,7 @@ const handleEngageBattle = () => {
   gameMain.value.combat.enemyCurrId = 0
   engageBattle(gameMain.value)
 }
+
 // 进入门
 const handleChooseNextroomEvent = () => {
   if (gameMain.value.map.status.eventType === 'nextroom') {
@@ -255,16 +300,124 @@ const handleIgnoreEvent = () => {
   if (gameMain.value.map.status.eventType === 'nextroom') {
     gameMain.value.map.action = 0;
     ignoreEvent(gameMain.value.map)
-  } else if (gameMain.value.map.status.eventType === 'treasure') {
+  } else if (['treasure', 'equipment'].includes(gameMain.value.map.status.eventType)) {
     gameMain.value.map.action = 0;
     ignoreEvent(gameMain.value.map)
   }
 }
-// 出售装备
+// 出售所有装备
 const handleSaleAllEquipment = () => {
   sellAll(gameMain.value, equipmentSelectVal.value)
 }
+// 出售单件装备
+const handleShowSaleEquipment = (id, mode) => {
+  saleEquipmentTriggerType.value = mode
+  console.log('handleShowSaleEquipment', id, currShowEquipment.value);
+  if (!currShowEquipment.value) {
+    const item = gameMain.value.player.equipped.find(e => e.id === id)
+    currShowEquipment.value = {
+      // 需要转换
+      raw: item,
+      category: item.category,
+      rarity: item.rarity,
+      lvl: item.lvl,
+      tier: item.tier,
+      icon: equipmentIcon(item.category.value),
+      stats: item.stats,
+      value: item.value,
+      statsTransform: equipmentStatsTransform(item.stats),
+    }
+  }
+  equipmentShowOpen.value = false // 暂时关闭装备展示弹窗
+  saleEquipmentOpen.value = true
+}
 
+// 确定出售装备
+const handleConfirmSaleEquipment = (id) => {
+  if (saleEquipmentTriggerType.value === 'click') {
+    // 未装备
+    sellEquipment(gameMain.value, 'Equip', id)
+  } else if (saleEquipmentTriggerType.value === 'hover') {
+    // 已装备
+    sellEquipment(gameMain.value, 'Unequip', id)
+  }
+  saleEquipmentTriggerType.value = ''
+  saleEquipmentOpen.value = false
+  equipmentShowOpen.value = false
+  currShowEquipment.value = null
+}
+
+// 关闭出售单间询问弹窗
+const handleCloseSaleEquipment = () => {
+  saleEquipmentOpen.value = false
+  if (saleEquipmentTriggerType.value === 'hover') {
+    equipmentShowOpen.value = false
+    currShowEquipment.value = null
+  } else {
+    equipmentShowOpen.value = true // 重新弹出装备展示弹窗
+  }
+
+}
+
+// 关闭装备展示弹窗
+const handleCloseEquipmentShow = () => {
+  equipmentShowOpen.value = false
+  currShowEquipment.value = null
+}
+// 装备或者脱下装备
+const handleEquipOrUnequipEquipment = async (type, id) => {
+  equipOrUnEquipment(gameMain.value, type, id, toast)
+  await nextTick()
+  equipmentShowOpen.value = false
+  currShowEquipment.value = null
+
+}
+
+// 卸下全部
+const handleUnequipAll = () => {
+  unequipAll(gameMain.value)
+}
+const handleEquipmentShow = (item, isHover = false, isTrans = false) => {
+  // 如果是hover，则不显示
+  if (isHover) return
+  equipmentType.value = 'Equip';
+  if (isTrans) {
+    equipmentType.value = 'Unequip';
+    item = {
+      // 需要转换
+      raw: item,
+      category: item.category,
+      rarity: item.rarity,
+      lvl: item.lvl,
+      tier: item.tier,
+      icon: equipmentIcon(item.category.value),
+      stats: item.stats,
+      value: item.value,
+      statsTransform: equipmentStatsTransform(item.stats),
+    }
+  }
+  console.log('handleEquipmentShow item', item);
+  currShowEquipment.value = item
+  equipmentShowOpen.value = true;
+}
+
+// 获取地图日志中的装备
+const handleGetEquipment = () => {
+  const filterList = gameMain.value.map.backlog.filter(e => typeof e === 'object' && e.type === 'equipment')
+  if (!filterList.length) {
+    toast({
+      title: '未获取到装备数据！',
+      variant: 'warning',
+    });
+    handleIgnoreEvent()
+  } else {
+    const equipment = filterList[filterList.length - 1].raw
+    gameMain.value.player.inventory.equipment.push(JSON.stringify(equipment))
+    gameMain.value.map.status.eventType = ''
+    gameMain.value.map.status.event = false;
+  }
+
+}
 
 // 清空地图日志
 const handleClearMapLog = () => {
@@ -295,6 +448,7 @@ const handleRandomName = () => {
 // 应用属性分配
 const handleApplyAllocation = () => {
   if (!validateName()) return
+  gameMain.value.player.name = allocation.value.name
   calculateStats(gameMain.value)
   gameMain.value.player.baseStats = {
     hp: openApplyStats.value.hp,
@@ -307,7 +461,7 @@ const handleApplyAllocation = () => {
     critDmg: 50
   }
   // 设置玩家技能
-  objectValidation(gameMain.value.player);
+  objectValidation(gameMain.value);
   if (skillSelectVal.value == "Devastator") {
     gameMain.value.player.skills.push("Devastator");
     gameMain.value.player.baseStats.atkSpd = gameMain.value.player.baseStats.atkSpd - ((30 * gameMain.value.player.baseStats.atkSpd) / 100);
@@ -322,7 +476,11 @@ const handleApplyAllocation = () => {
   saveData(gameMain.value)
   GameBeginSetConfigOpen.value = false
   coverLoading.value = false
-  gameMainLoading.value = false
+  gameMainLoading.value = true
+  setTimeout(() => {
+    gameMainLoading.value = false
+    gameWindowLoading.value = true
+  }, randomizeNum(1000, 3000));
 }
 
 // 验证名称
@@ -344,26 +502,33 @@ const validateName = () => {
   return true
 }
 
+// 显示小数
 const dealFloatFixed = (val, fixed = 2) => {
   return parseFloat(val.toFixed(fixed))
 }
 
-
-
-onMounted(() => {
-  mode.value = 'dark'
+// 初始化游戏
+const initGame = () => {
   if (localStorage.getItem("gameMain")) {
     gameMain.value = JSON.parse(localStorage.getItem("gameMain"))
-    console.log(localStorage.getItem("gameMain"));
+    // console.log(localStorage.getItem("gameMain"));
     if (gameMain.value.player.allocated) {
       GameBeginSetConfigOpen.value = false
       coverLoading.value = false
       gameMainLoading.value = false
+      gameWindowLoading.value = true
       enterDungeon(gameMain.value);
+      if (gameMain.value.map.enemyBattleList.length && gameMain.value.combat.enemyCurrId > -1) {
+        combatOpen.value = true
+        if (gameMain.value.player.inCombat) {
+          startCombat(gameMain.value);
+        }
+      }
     } else {
       GameBeginSetConfigOpen.value = false
       coverLoading.value = true
-      gameMainLoading.value = true
+      gameMainLoading.value = false
+      gameWindowLoading.value = false
     }
     // // 创建并加载地图
     // let map = initialDungeonLoad(gameMain.value)
@@ -381,11 +546,42 @@ onMounted(() => {
         }
       }
     })
+
+  } else {
+    GameBeginSetConfigOpen.value = false
+    coverLoading.value = true
+    gameMainLoading.value = false
+    gameWindowLoading.value = false
   }
+  watchEffect(() => {
+    if (gameMain.value.player.selectedStats && gameMain.value.player.selectedStats.length > 0) {
+      nextTick(() => {
+        console.log('asdasdasasd', gameMain.value.player.selectedStats.length);
+        // 延迟加载，解决无法触发的问题
+        levelUpOpen.value = true;
+      })
 
-  console.log('gameMain', gameMain);
+    } else {
+      nextTick(() => {
+        // 延迟加载，解决无法触发的问题
+        levelUpOpen.value = false;
+      })
+    }
+  })
+
+}
+
+// 计算属性，判断是否为移动端
+const isMobile = computed(() => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+});
+
+onMounted(() => {
+  mode.value = 'dark'
+  initGame()
 
 
+  // console.log('gameMain', gameMain);
 })
 
 </script>
@@ -415,7 +611,7 @@ onMounted(() => {
   </div>
   <AlertDialog v-model:open="GameBeginSetConfigOpen">
     <AlertDialogContent
-      class="md:w-[300px] mobile:w-full p-3"
+      class="md:w-[300px] mobile:w-2/3 p-3"
       @escapeKeyDown.prevent
     >
       <div>
@@ -569,21 +765,18 @@ onMounted(() => {
     v-if="gameMainLoading"
     class="flex flex-col space-y-3 p-3 h-screen"
   >
-    <Skeleton class="h-12 min-w-screen-sm md:w-full" />
-    <div class="flex space-x-4">
-      <Skeleton class="flex-1 rounded-xl h-64" />
-      <Skeleton class="flex-1 rounded-xl h-64" />
-    </div>
-    <Skeleton class="h-12 min-w-screen-sm md:w-full" />
-    <Skeleton class="flex-1 min-w-screen-sm md:w-full" />
+    <Icon
+      icon="svg-spinners:blocks-wave"
+      class="m-auto !size-16 border-none"
+    />
   </div>
   <div
-    v-else
+    v-if="gameWindowLoading"
     class="container mx-auto flex flex-col h-screen  min-w-screen-sm md:w-[40rem]"
   >
     <div class="flex justify-between items-center border mt-4 mb-3 h-fit w-full rounded-lg py-1">
       <div class="ml-2 mobile:grow flex mobile:flex-col md:flex-row md:items-center md:grow">
-        <p class="playerIcon grow ml-2 flex">
+        <p class="playerIcon grow flex">
           <Icon
             icon="basil:user-solid"
             class="!size-6 mr-1"
@@ -603,7 +796,7 @@ onMounted(() => {
         />
         <span>{{nFormatter(gameMain.player.gold)}}</span>
       </p>
-      <p class="grow-0 mx-1 top-panel-menu-button hover-button">
+      <p class="grow-0 top-panel-menu-button hover-button">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as="Icon">
@@ -619,6 +812,7 @@ onMounted(() => {
           </Tooltip>
         </TooltipProvider>
         <AlertDialog v-model:open="menuBackpackOpen">
+          <AlertDialogOverlay class="fixed inset-0 z-[50] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
           <AlertDialogContent
             class="w-fit"
             @escapeKeyDown.prevent
@@ -626,6 +820,9 @@ onMounted(() => {
           >
             <AlertDialogHeader>
               <AlertDialogTitle>背包</AlertDialogTitle>
+              <VisuallyHidden>
+                <AlertDialogDescription></AlertDialogDescription>
+              </VisuallyHidden>
             </AlertDialogHeader>
             <div class="flex flex-col items-center space-x-2">
               <div class="flex items-center">
@@ -671,11 +868,16 @@ onMounted(() => {
             </div>
             <ScrollArea class="flex-1 mb-2 rounded-lg  min-h-60 max-h-60 w-64">
               <div
-                class="flex items-center text-sm leading-6 hover:bg-white/20 rounded-md py-1"
+                class="flex items-center text-sm leading-6 hover:bg-white/20 rounded-md py-1 cursor-pointer"
                 v-for="equipment in backEquipmentList"
                 :style="`color:${getRarityColor(equipment.rarity)}`"
+                @click="handleEquipmentShow(equipment)"
               >
-                <span v-html="equipment.icon"></span>
+                <span
+                  v-html="
+                equipment.icon"
+                  class="mr-1"
+                ></span>
                 <span>{{ getRarityLabel(equipment.rarity) }}的{{ equipment.category.label }}</span>
               </div>
             </ScrollArea>
@@ -689,6 +891,7 @@ onMounted(() => {
                         <Icon
                           icon="icon-park-outline:clear"
                           class="!size-6 ml-2 p-1 rounded-lg cursor-pointer border-none hover-button"
+                          @click="handleUnequipAll"
                         />
                       </TooltipTrigger>
                       <TooltipContent side="right">
@@ -698,38 +901,83 @@ onMounted(() => {
                   </TooltipProvider>
                 </CardTitle>
               </CardHeader>
-              <CardContent class="grid grid-cols-3 gap-2 px-4 pb-4">
+              <CardContent
+                v-if="gameMain.player.equipped.length"
+                class="grid grid-cols-3 gap-4 px-4 pb-4"
+              >
                 <HoverCard
-                  v-for="i in 6"
-                  :key="i"
+                  v-for="equipment in gameMain.player.equipped"
+                  :key="equipment.id"
                 >
                   <HoverCardTrigger as-child>
-                    <div class="text-center py-2 border rounded-lg cursor-pointer">
-                      <Icon
-                        icon="game-icons:broadsword"
-                        class="!size-6 inline-block"
-                      />
+                    <div
+                      class="text-center py-2 border rounded-lg cursor-pointer"
+                      :style="`color:${getRarityColor(equipment.rarity)};border-color:${getRarityColor(equipment.rarity)}`"
+                      @click="handleEquipmentShow(equipment,true,true)"
+                    >
+                      <span v-html="getIcon(equipment.category.value)"></span>
                     </div>
                   </HoverCardTrigger>
-                  <HoverCardContent class="w-80">
-                    <div class="flex justify-between space-x-4">
-                      <div class="space-y-1">
-                        <h4 class="text-sm font-semibold">
-                          @vuejs
-                        </h4>
-                        <p class="text-sm">
-                          Progressive JavaScript framework for building modern web interfaces.
-                        </p>
-                        <div class="flex items-center pt-2">
-                          <span class="text-xs text-muted-foreground">
-                            Joined January 2014
-                          </span>
-                        </div>
+                  <HoverCardContent
+                    class="w-fit"
+                    v-if="!isMobile"
+                  >
+                    <div
+                      class="flex flex-col"
+                      v-if="equipment"
+                    >
+                      <div
+                        class="text-lg mb-2"
+                        :style="`color:${getRarityColor(equipment.rarity)}`"
+                      >
+                        <span
+                          v-html="equipment.icon"
+                          class="mr-1"
+                        ></span>
+                        <span>{{ getRarityLabel(equipment.rarity) }}的{{ equipment.category.label }}</span>
+                      </div>
+                      <p class="mx-1 text-xs font-bold">等级 {{ equipment.lvl }} 品阶 {{ equipment.tier }}</p>
+                      <p
+                        class="mx-1 text-sm"
+                        v-for="stat in getEquipmentStatsTransform(equipment.stats)"
+                      >
+                        {{ stat.label }}+{{ ["critRate","critDmg","atkSpd","vamp"].includes(stat.key)?dealFloatFixed(stat.value):stat.value }}{{ stat.unit }}
+                      </p>
+                      <div class="flex my-2">
+                        <Button
+                          variant="outline"
+                          class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white mr-2"
+                          @click="handleEquipOrUnequipEquipment('unequip',equipment.id)"
+                        >
+                          脱下
+                        </Button>
+                        <Button
+                          variant="outline"
+                          class="text-[#fde047] hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white mr-2"
+                          @click="handleShowSaleEquipment(equipment.id,'hover')"
+                        >
+                          <svg
+                            class="inline-block"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              fill="currentColor"
+                              d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z"
+                            />
+                          </svg><span>{{ equipment.value }}</span>
+                        </Button>
                       </div>
                     </div>
                   </HoverCardContent>
                 </HoverCard>
               </CardContent>
+              <CardContent
+                v-else
+                class="text-center text-sm"
+              >未装备</CardContent>
             </Card>
             <div
               @click="()=> menuBackpackOpen = false"
@@ -740,14 +988,14 @@ onMounted(() => {
           </AlertDialogContent>
         </AlertDialog>
       </p>
-      <p class="grow-0 mr-2 top-panel-menu-button hover-button">
+      <p class="grow-0 top-panel-menu-button hover-button">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger as="Icon">
               <Icon
                 icon="fluent:list-rtl-16-filled"
                 class="!size-6 border-none"
-                @click="handleOpenMenuCfg"
+                @click="menuCfgOpen = true"
               />
             </TooltipTrigger>
             <TooltipContent>
@@ -963,113 +1211,24 @@ onMounted(() => {
           </DialogContent>
         </Dialog>
       </p>
+      <p class="grow-0 mr-2 top-panel-menu-button hover-button">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger as="Icon">
+              <Icon
+                icon="solar:logout-3-bold"
+                class="!size-6 border-none rotate-180"
+                @click="menuQuitOpen = true"
+              />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>放弃本局</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </p>
     </div>
-    <div class="flex mb-3 h-fit w-full">
-      <div class="mid-panel-box mr-3">
-        <div class="mid-panel-title">属性</div>
-        <div class="flex my-1 items-center">
-          <Icon
-            icon="typcn:heart-full-outline"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">生命值：{{nFormatter(gameMain.player.stats.hp)}}/{{nFormatter(gameMain.player.stats.hpMax)}}（{{gameMain.player.stats.hpPercent}}%）</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:rune-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">攻击：{{gameMain.player.stats.atk}}</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:breastplate"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">防御：{{gameMain.player.stats.def}}</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:blade-fall"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">攻击速度：{{gameMain.player.stats.atkSpd}}</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:charm"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">吸血：{{gameMain.player.stats.vamp}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:zeus-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">暴击率：{{gameMain.player.stats.critRate}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:gooey-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">暴击伤害：{{gameMain.player.stats.critDmg}}%</span>
-        </div>
-      </div>
-      <div class="mid-panel-box">
-        <div class="mid-panel-title">属性加成</div>
-        <div class="flex my-1">
-          <Icon
-            icon="typcn:heart-full-outline"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">生命值+{{gameMain.player.bonusStats.atk}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:rune-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">攻击+{{gameMain.player.bonusStats.atk}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:breastplate"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">防御+{{gameMain.player.bonusStats.def}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:blade-fall"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">攻击速度+{{gameMain.player.bonusStats.atkSpd}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:charm"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">吸血+{{gameMain.player.bonusStats.vamp}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:zeus-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">暴击率+{{gameMain.player.bonusStats.critRate}}%</span>
-        </div>
-        <div class="flex my-1">
-          <Icon
-            icon="game-icons:gooey-sword"
-            class="sm:!size-6 mr-1 mobile:!size-5"
-          />
-          <span class="mobile:text-sm sm:text-base">暴击伤害+{{gameMain.player.bonusStats.critDmg}}%</span>
-        </div>
-      </div>
-    </div>
+    <AttributePanel :dealFloatFixed="dealFloatFixed"></AttributePanel>
     <div class="flex justify-between mb-3 h-fit w-full">
       <div class="py-2">{{dungeonTime}}</div>
       <div class="py-2">层数 {{ gameMain.map.progress.floor }}</div>
@@ -1118,8 +1277,33 @@ onMounted(() => {
         class="mb-1.5 flex items-center align-middle"
         v-for="(msg,idx) in gameMain.map.backlog"
         :key="idx"
-        v-html="msg"
       >
+        <p
+          v-if="typeof msg === 'string' "
+          v-html="msg"
+        ></p>
+        <div
+          v-if="typeof msg === 'object' && msg.type ==='equipment' "
+          class="border p-2 rounded-lg mx-1 my-1"
+        >
+          <div
+            class="text-lg mb-2"
+            :style="`color:${getRarityColor(msg.rarity)}`"
+          >
+            <span
+              v-html="msg.icon"
+              class="mr-1"
+            ></span>
+            <span>{{ getRarityLabel(msg.rarity) }}的{{ msg.category.label }}</span>
+          </div>
+          <p class="mx-1 text-xs font-bold">等级 {{ msg.lvl }} 品阶 {{ msg.tier }}</p>
+          <p
+            class="mx-1 text-sm"
+            v-for="stat in msg.statsTransform"
+          >
+            {{ stat.label }}+{{ ["critRate","critDmg","atkSpd","vamp"].includes(stat.key)?dealFloatFixed(stat.value):stat.value }}{{ stat.unit }}
+          </p>
+        </div>
       </div>
       <div
         class="flex space-x-2 px-1"
@@ -1159,7 +1343,15 @@ onMounted(() => {
           逃跑
         </Button>
         <Button
-          v-if="['treasure','nextroom'].includes(gameMain.map.status.eventType)"
+          v-if="['equipment'].includes(gameMain.map.status.eventType)"
+          variant="outline"
+          class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
+          @click="handleGetEquipment"
+        >
+          领取
+        </Button>
+        <Button
+          v-if="['treasure','nextroom','equipment'].includes(gameMain.map.status.eventType)"
           variant="outline"
           class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
           @click="handleIgnoreEvent"
@@ -1169,101 +1361,50 @@ onMounted(() => {
       </div>
     </ScrollArea>
   </div>
-  <AlertDialog
+  <!-- 显示装备详情 begin -->
+  <equipmentShow
+    :equipmentShow="equipmentShowOpen"
+    :equipment="currShowEquipment"
+    :equipmentType="equipmentType"
+    :getRarityLabel="getRarityLabel"
+    :getRarityColor="getRarityColor"
+    :dealFloatFixed="dealFloatFixed"
+    @equipOrUnequipEquipment="handleEquipOrUnequipEquipment"
+    @closeEquipmentShow="handleCloseEquipmentShow"
+    @equipmentSale="handleShowSaleEquipment"
+  />
+  <!-- 显示装备详情 end -->
+  <!-- 出售装备 begin -->
+  <saleEquipment
+    :saleEquipmentOpen="saleEquipmentOpen"
+    :equipment="currShowEquipment"
+    :getRarityLabel="getRarityLabel"
+    :getRarityColor="getRarityColor"
+    @equipmentSale="handleConfirmSaleEquipment"
+    @closeSaleEquipment="handleCloseSaleEquipment"
+  />
+  <!-- 出售装备 end -->
+  <!-- 放弃本局游戏 begin -->
+  <failedGameAlertDialog
+    v-model:menuQuitOpen="menuQuitOpen"
+    @failedGame="handleFailedGame"
+  />
+  <!-- 放弃本局游戏 end -->
+  <CombatPanel
     v-if="currEnemy || gameMain.player.inCombat"
-    v-model:open="combatOpen"
-  >
-    <AlertDialogContent
-      class="md:w-[400px] mobile:w-full"
-      @escapeKeyDown.prevent
-    >
-      <VisuallyHidden>
-        <AlertDialogHeader>
-          <AlertDialogTitle></AlertDialogTitle>
-          <AlertDialogDescription>
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-      </VisuallyHidden>
-      <div>
-        <div class="text-center mb-1.5 text-base">{{currEnemy.name}} 等级 {{ currEnemy.lvl }}</div>
-        <div class="relative h-4 bg-slate-400 rounded-md mx-2 mb-2">
-          <div
-            class="absolute z-[0] h-full bg-red-600 rounded-md transition-all"
-            :style="`width: ${currEnemy.stats.hpPercent}%;`"
-          ></div>
-          <span class="absolute text-xs z-1 left-1">{{currEnemy.stats.hp}}/{{ currEnemy.stats.hpMax }}（{{ currEnemy.stats.hpPercent }}%）</span>
-        </div>
-        <!-- <Skeleton class="h-40 w-40 mx-auto rounded-xl mb-4" /> -->
-        <img
-          src="../../public/wolf_winter.png"
-          alt="Photo by Drew Beamer"
-          class="rounded-md object-cover mx-auto h-40 w-40 mb-4 block"
-        >
-        <div class="border rounded-md p-2 mb-2">
-          <p class="mb-1">{{ gameMain.player.name }} 等级 {{ gameMain.player.lvl }}（{{gameMain.player.exp.expPercent}}%）</p>
-          <div class="relative h-4 bg-slate-400 rounded-md mb-1">
-            <div
-              class="absolute z-[0] h-full bg-red-600 rounded-md transition-all"
-              :style="`width: ${gameMain.player.stats.hpPercent}%;`"
-            ></div>
-            <span class="absolute text-xs z-1 left-1">{{gameMain.player.stats.hp}}/{{ gameMain.player.stats.hpMax }}（{{ gameMain.player.stats.hpPercent }}%）</span>
-          </div>
-          <div class="relative h-1 bg-slate-400 rounded-md mb-2">
-            <div
-              class="absolute z-[0] h-full bg-purple-600 rounded-md"
-              :style="`width: ${gameMain.player.exp.expPercent}%;`"
-            ></div>
-          </div>
-        </div>
-        <ScrollArea class="border rounded-md p-2 h-[260px]">
-          <div
-            class="mb-2 flex items-center align-middle"
-            v-for="(msg,idx) in gameMain.combat.combatBacklog"
-            :key="idx"
-            v-html="msg"
-          >
-          </div>
-          <div
-            v-for="equipment in gameMain.combat.combatLoot"
-            :key="equipment.id"
-            class="border rounded-lg p-1.5 mb-2"
-          >
-            <p :style="`color:${getRarityColor(equipment.rarity)}`"><span v-html="equipment.icon"></span><span class="font-bold">{{ getRarityLabel(equipment.rarity) }}的{{ equipment.category.label }}</span></p>
-            <p class="mx-1">等级 {{ equipment.lvl }} 品阶 {{ equipment.tier }}</p>
-            <p
-              class="mx-1"
-              v-for="stat in equipment.statsTransform"
-            >
-              {{ stat.label }}+{{ ["critRate","critDmg","atkSpd","vamp"].includes(stat.key)?dealFloatFixed(stat.value):stat.value }}{{ stat.unit }}
-            </p>
-          </div>
-          <Button
-            v-if="gameMain.enemyDead"
-            variant="outline"
-            class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white mr-2"
-            @click="handleEndBattle"
-          >
-            领取
-          </Button>
-          <Button
-            v-if="gameMain.enemyDead"
-            variant="outline"
-            class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white mr-2"
-            @click="handleIgnoreEndBattle"
-          >
-            忽略
-          </Button>
-          <Button
-            v-if="gameMain.playerDead"
-            variant="outline"
-            class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
-            @click="handleEndBattle"
-          >
-            重开
-          </Button>
-        </ScrollArea>
-      </div>
-    </AlertDialogContent>
-  </AlertDialog>
+    :combatOpen="combatOpen"
+    :currEnemy="currEnemy"
+    :equipment="currShowEquipment"
+    :getRarityLabel="getRarityLabel"
+    :getRarityColor="getRarityColor"
+    :dealFloatFixed="dealFloatFixed"
+    @endBattle="handleEndBattle"
+    @ignoreEndBattle="handleIgnoreEndBattle"
+    @failedGame="handleFailedGame"
+  ></CombatPanel>
+  <LevelUpPanel
+    v-if="levelUpOpen"
+    :levelUpOpen="levelUpOpen"
+  ></LevelUpPanel>
   <Toaster />
 </template>

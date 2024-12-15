@@ -1,7 +1,7 @@
 import { createEquipmentPrint } from "./equipment.js";
 import { enemyLoadStats } from "./enemy.js";
 import { playerLoadStats, playerExpGain, objectValidation } from "./player.js";
-import { nFormatter } from "./utils.js";
+import { nFormatter, saveData } from "./utils.js";
 
 const critDamage = ` 暴击伤害`
 
@@ -45,17 +45,17 @@ const endCombat = (gameMain) => {
   // Skill validation
   if (player.skills.includes("Rampager")) {
     // 移除狂暴者攻击增益
-    objectValidation(player);
+    objectValidation(gameMain);
     player.baseStats.atk -= player.tempStats.atk;
     player.tempStats.atk = 0;
-    // saveData();
+    saveData(gameMain);
   }
   if (player.skills.includes("Blade Dance")) {
     // 移除剑舞攻击速度增益
-    objectValidation(player);
+    objectValidation(gameMain);
     player.baseStats.atkSpd -= player.tempStats.atkSpd;
     player.tempStats.atkSpd = 0;
-    // saveData();
+    saveData(gameMain);
   }
 
   // 停止战斗中的所有计时器
@@ -180,7 +180,7 @@ const playerAttack = (gameMain) => {
   }
 
   // 技能效果
-  objectValidation(player);
+  objectValidation(gameMain);
   if (player.skills.includes("Remnant Razor")) {
     // 攻击时会额外造成敌人当前生命值的 8%
     damage += Math.round((8 * enemy.stats.hp) / 100);
@@ -196,16 +196,16 @@ const playerAttack = (gameMain) => {
   if (player.skills.includes("Rampager")) {
     // 每次攻击后增加 5 点基础攻击力。战斗后堆叠重置。
     player.baseStats.atk += 5;
-    objectValidation(player);
+    objectValidation(gameMain);
     player.tempStats.atk += 5;
-    // saveData();
+    saveData(gameMain);
   }
   if (player.skills.includes("Blade Dance")) {
     // 每次攻击后增加攻击速度。战斗后堆叠重置
     player.baseStats.atkSpd += 0.01;
-    objectValidation(player);
+    objectValidation(gameMain);
     player.tempStats.atkSpd += 0.01;
-    // saveData();
+    saveData(gameMain);
   }
 
   // 吸血公式
@@ -290,7 +290,7 @@ const enemyAttack = (gameMain) => {
   // 应用计算
   player.stats.hp -= damage;
   // 守护荆棘技能
-  objectValidation(player);
+  objectValidation(gameMain);
   if (player.skills.includes("Aegis Thorns")) {
     // 敌人将受到其造成伤害的 15%
     enemy.stats.hp -= Math.round((15 * damage) / 100);

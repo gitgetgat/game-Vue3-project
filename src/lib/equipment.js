@@ -1,6 +1,7 @@
-import { randomizeNum, randomizeDecimal } from "./utils.js";
+import { randomizeNum, randomizeDecimal, saveData } from "./utils.js";
 import { equipmentAttributesList, equipmentCategoriesList, rarityChances, equipmentIcons, equipmentRarityList, equipmentAttr2Label } from "../config/equipment.js";
 import { addCombatLog } from "./combat.js"
+import { continueExploring, addDungeonLog } from "./dungeon.js"
 import { playerLoadStats, calculateStats } from "./player.js"
 import { v4 as uuidv4 } from 'uuid';
 // 生成装备
@@ -211,41 +212,52 @@ export const equipmentIcon = (equipment) => {
 
 // 装备/取消装备该物品的按钮
 
-export const equipOrUnEquipment = (gameMain, type, equipment, id) => {
+export const equipOrUnEquipment = (gameMain, type, id, toast) => {
   const { player } = gameMain;
-  if (type == "Equip") {
+  if (type == "equip") {
     // 从库存中移除物品并将其添加到设备中
     if (player.equipped.length >= player.equippedLimit) {
-      return
+      toast({
+        title: '可装备数量达到极限！',
+        variant: 'warning',
+      });
     } else {
+      const i = player.inventory.equipment.findIndex(e => e.includes(id));
+      const equipment = JSON.parse(player.inventory.equipment[i])
       // 装备物品
-      player.inventory.equipment.splice(id, 1);
+      player.inventory.equipment.splice(i, 1);
       player.equipped.push(equipment);
     }
-  } else if (type == "Unequip") {
+  } else if (type == "unequip") {
+    const i = player.equipped.findIndex(e => e.id === id);
+    const equipment = player.equipped[i]
     // 从装备中移除物品并将其添加到库存中
-    player.equipped.splice(id, 1);
+    player.equipped.splice(i, 1);
     player.inventory.equipment.push(JSON.stringify(equipment));
   }
   playerLoadStats(gameMain);
-  // saveData();
-  // continueExploring();
+  saveData(gameMain);
+  continueExploring(gameMain);
 }
 
 // 卖装备
 
-export const sellEquipment = (gameMain, type, equipment, id) => {
+export const sellEquipment = (gameMain, type, id) => {
   const { player } = gameMain;
   if (type == "Equip") {
+    const i = player.inventory.equipment.findIndex(e => e.includes(id))
+    const equipment = JSON.parse(player.inventory.equipment[i])
     player.gold += equipment.value;
     player.inventory.equipment.splice(i, 1);
   } else if (type == "Unequip") {
+    const i = player.equipped.findIndex(e => e.id === id)
+    const equipment = player.equipped[i]
     player.gold += equipment.value;
     player.equipped.splice(i, 1);
   }
   playerLoadStats(gameMain);
-  // saveData();
-  // continueExploring();
+  saveData(gameMain);
+  continueExploring(gameMain);
 }
 
 
@@ -261,7 +273,7 @@ export const sellAll = (gameMain, rarity) => {
         i--;
       }
       playerLoadStats(gameMain);
-      // saveData();
+      saveData(gameMain);
     }
   } else {
     let rarityCheck = false;
@@ -282,7 +294,7 @@ export const sellAll = (gameMain, rarity) => {
         }
       }
       playerLoadStats(gameMain);
-      // saveData();
+      saveData(gameMain);
     }
   }
 }
@@ -324,7 +336,7 @@ export const unequipAll = (gameMain) => {
     player.inventory.equipment.push(JSON.stringify(item));
   }
   playerLoadStats(gameMain);
-  // saveData();
+  saveData(gameMain);
 }
 
 export const createEquipmentPrint = (condition, gameMain, enemy = { name: '' }) => {
@@ -336,7 +348,7 @@ export const createEquipmentPrint = (condition, gameMain, enemy = { name: '' }) 
     gameMain.combat.combatLoot.push(item)
     // addCombatLog(gameMain, item)
   } else if (condition == "dungeon") {
-    addDungeonLog(gameMain.map, `你得到了 <span class="${item.rarity}">${item.rarity} ${item.category}</span>.`);
-    addDungeonLog(gameMain.map, item)
+    addDungeonLog(gameMain.map, `你得到了 <span style="color:${ele.color}" class="font-bold">${ele.label} 的 ${item.category.label}</span>.`);
+    addDungeonLog(gameMain.map, { ...item, type: 'equipment' })
   }
 }

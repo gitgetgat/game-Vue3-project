@@ -1,8 +1,9 @@
 import { percentages } from '../config/player.js'
 import { applyEquipmentStats } from './equipment.js'
+import { saveData } from "./utils.js";
 
 // 升级时可选择的升级属性选项组
-let selectedStats = [];
+// let selectedStats = [];
 
 
 // 玩家获取经验
@@ -60,7 +61,7 @@ const lvlupPopup = (gameMain) => {
   playerLoadStats(gameMain);
   // 创建
   for (let i = 0; i < gameMain.player.exp.lvlGained; i++) {
-    selectedStats.push(generateLvlStats());
+    gameMain.player.selectedStats.push(generateLvlStats());
   }
 
 }
@@ -146,7 +147,7 @@ export const calculateStats = (gameMain) => {
 }
 
 // Generates random stats for level up popup
-const generateLvlStats = () => {
+export const generateLvlStats = () => {
   let selectedStats = [];
   let stats = ["hp", "atk", "def", "atkSpd", "vamp", "critRate", "critDmg"];
   while (selectedStats.length < 3) {
@@ -157,71 +158,12 @@ const generateLvlStats = () => {
   }
 
   return selectedStats
-
-  const loadLvlHeader = () => {
-    lvlupSelect.innerHTML = `
-            <h1>Level Up!</h1>
-            <div class="content-head">
-                <h4>Remaining: ${player.exp.lvlGained}</h4>
-                <button id="lvlReroll">Reroll ${rerolls}/2</button>
-            </div>
-        `;
-  }
-  loadLvlHeader();
-
-  const lvlReroll = document.querySelector("#lvlReroll");
-  lvlReroll.addEventListener("click", function () {
-    if (rerolls > 0) {
-      sfxSell.play();
-      rerolls--;
-      loadLvlHeader();
-      generateLvlStats(rerolls, percentages);
-    } else {
-      sfxDeny.play();
-    }
-  });
-
-  try {
-    for (let i = 0; i < 4; i++) {
-      let button = document.createElement("button");
-      button.id = "lvlSlot" + i;
-
-      let h3 = document.createElement("h3");
-      h3.innerHTML = selectedStats[i].replace(/([A-Z])/g, ".$1").replace(/crit/g, "c").toUpperCase() + " UP";
-      button.appendChild(h3);
-
-      let p = document.createElement("p");
-      p.innerHTML = `Increase bonus ${selectedStats[i].replace(/([A-Z])/g, ".$1").replace(/crit/g, "c").toUpperCase()} by ${percentages[selectedStats[i]]}%.`;
-      button.appendChild(p);
-
-      // Increase the selected stat for player
-      button.addEventListener("click", function () {
-        sfxItem.play();
-        player.bonusStats[selectedStats[i]] += percentages[selectedStats[i]];
-
-        if (player.exp.lvlGained > 1) {
-          player.exp.lvlGained--;
-          generateLvlStats(2, percentages);
-        } else {
-          player.exp.lvlGained = 0;
-          lvlupPanel.style.display = "none";
-          combatPanel.style.filter = "brightness(100%)";
-          leveled = false;
-        }
-
-        playerLoadStats();
-        saveData();
-      });
-
-      lvlupSelect.appendChild(button);
-    }
-  } catch (err) { }
 }
 
 // 选择某一项升级
-export const handleSelectedLvlStat = (gameMain) => {
+export const handleSelectedLvlStat = (gameMain, i) => {
   const { player } = gameMain;
-  player.bonusStats[selectedStats[i]] += percentages[selectedStats[i]];
+  player.bonusStats[player.selectedStats[0][i]] += percentages[player.selectedStats[0][i]].value;
 
   if (player.exp.lvlGained > 1) {
     player.exp.lvlGained--;
@@ -229,14 +171,15 @@ export const handleSelectedLvlStat = (gameMain) => {
     player.exp.lvlGained = 0;
     player.leveled = false;
   }
-
+  player.selectedStats.shift()
   playerLoadStats(gameMain);
-  // saveData();
+  saveData(gameMain);
 }
 
 
 // 校验玩家是否选择技能
-export const objectValidation = (player) => {
+export const objectValidation = (gameMain) => {
+  const { player } = gameMain;
   if (player.skills == undefined) {
     player.skills = [];
   }
@@ -245,5 +188,5 @@ export const objectValidation = (player) => {
     player.tempStats.atk = 0;
     player.tempStats.atkSpd = 0;
   }
-  // saveData();
+  saveData(gameMain);
 }

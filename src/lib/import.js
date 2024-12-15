@@ -1,5 +1,5 @@
 export {
-  Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription
 } from '@/components/ui/dialog'
 export {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
@@ -11,8 +11,12 @@ export {
   Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
 } from '@/components/ui/card'
 export {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogFooter, AlertDialogAction,
 } from '@/components/ui/alert-dialog'
+
+export {
+  AlertDialogOverlay,
+} from 'radix-vue';
 export { Button } from '@/components/ui/button'
 export { Icon } from '@iconify/vue'
 export { ScrollArea } from '@/components/ui/scroll-area'
@@ -29,13 +33,14 @@ export {
 } from '@/components/ui/number-field'
 export { VisuallyHidden } from 'radix-vue'
 export { Toaster } from '@/components/ui/toast'
-export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon } from "../lib/dungeon"
-export { playerLoadStats, objectValidation, calculateStats } from "../lib/player";
-export { equipmentIcon, equipmentStatsTransform, sellAll } from "../lib/equipment";
+export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon, progressReset } from "../lib/dungeon"
+export { playerLoadStats, objectValidation, calculateStats, generateLvlStats, handleSelectedLvlStat } from "../lib/player";
+export { startCombat } from "../lib/combat";
+export { equipmentIcon, equipmentStatsTransform, sellAll, equipOrUnEquipment, sellEquipment, unequipAll } from "../lib/equipment";
 export { nFormatter, randomizeNum, saveData } from "../lib/utils";
 export { equipmentRarityList } from "../config/equipment"
 export { skillsDesc, prefixNames, names, skills } from "../config/player"
 export { X } from 'lucide-vue-next';
-export { onMounted, ref, watchEffect, computed } from 'vue'
+export { onMounted, ref, watchEffect, computed, nextTick, provide } from 'vue'
 export { useColorMode } from '@vueuse/core'
 export { useToast } from '@/components/ui/toast/use-toast'

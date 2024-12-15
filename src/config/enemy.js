@@ -1,96 +1,96 @@
 // 敌人名称
 const enemyNames = [
   // Goblin
-  'Goblin', 'Goblin Rogue', 'Goblin Mage', 'Goblin Archer',
+  '哥布林', '哥布林流氓', '哥布林流氓', '哥布林弓箭手',
   // Wolf
-  'Wolf', 'Black Wolf', 'Winter Wolf',
+  '狼', '黑狼', '冬狼',
   // Slime
-  'Slime', 'Angel Slime', 'Knight Slime', 'Crusader Slime',
+  '史莱姆', '天使史莱姆', '骑士史莱姆', '十字军史莱姆',
   // Orc
-  'Orc Swordsmaster', 'Orc Axe', 'Orc Archer', 'Orc Mage',
+  '兽人剑师', '兽人刀斧手', '兽人弓箭手', '兽人法师',
   // Spider
-  'Spider', 'Red Spider', 'Green Spider',
+  '蜘蛛', '红蜘蛛', '绿蜘蛛',
   // Skeleton
-  'Skeleton Archer', 'Skeleton Swordsmaster', 'Skeleton Knight', 'Skeleton Mage', 'Skeleton Pirate', 'Skeleton Samurai', 'Skeleton Warrior',
+  '骷髅弓箭手', '骷髅剑师', '骷髅骑士', '骷髅法师', '骷髅海盗', '骷髅武士', '骷髅战士',
   // Bosses
-  'Zaart, the Dominator Goblin', 'Banshee, Skeleton Lord', 'Molten Spider', 'Cerberus Ptolemaios', 'Hellhound Inferni', 'Berthelot, the Undead King', 'Slime King', 'Zodiac Cancer', 'Alfadriel, the Light Titan', 'Tiamat, the Dragon Knight', 'Nameless Fallen King', 'Zodiac Aries', 'Llyrrad, the Ant Queen', 'Clockwork Spider', 'Aragorn, the Lethal Wolf',
+  '萨尔特，哥布林的主宰者', '女妖，骷髅王', '熔岩蜘蛛', '三头犬·托勒密奥斯', 'Hellhound Inferni', 'Berthelot, the Undead King', '史莱姆之王', '癌症星座', '阿尔法德里尔，光之泰坦', '提亚马特，龙骑士', 'Nameless Fallen King', 'Zodiac Aries', '利拉德，蚁后', '发条蜘蛛', '阿拉贡，致命之狼',
   // Monarch
-  'Naizicher, the Spider Dragon', 'Ulliot, the Deathlord', 'Ifrit', 'Shiva', 'Behemoth', 'Blood Manipulation Feral', 'Thanatos', 'Darkness Angel Reaper', 'Zalaras, the Dragon Emperor'
+  '奈齐尔，蜘蛛龙', '死亡领主乌里奥特', '幻灵之力', '湿婆', '巨兽', 'Blood Manipulation Feral', '桑纳托斯死神', '黑暗天使收割者', '扎拉拉斯，龙王'
 ];
 
 const enemyNamesFilterByType = {
   Offensive: {
     guardian: [
-      'Zaart, the Dominator Goblin', 'Banshee, Skeleton Lord', 'Molten Spider', 'Berthelot, the Undead King'
+      '萨尔特，哥布林的主宰者', '女妖，骷髅王', '熔岩蜘蛛', '贝特洛，不死之王'
     ],
     sboss: [
-      'Behemoth', 'Zalaras, the Dragon Emperor'
+      '巨兽', '扎拉拉斯，龙王'
     ],
     other: [
-      'Goblin Mage', 'Goblin Archer',
-      'Wolf', 'Black Wolf', 'Winter Wolf',
+      '哥布林流氓', '哥布林弓箭手',
+      'Wolf', '黑狼', '冬狼',
       'Knight Slime',
-      'Orc Swordsmaster', 'Orc Axe', 'Orc Archer', 'Orc Mage',
-      'Red Spider',
-      'Skeleton Archer', 'Skeleton Swordsmaster', 'Skeleton Mage', 'Skeleton Pirate', 'Skeleton Samurai',
+      '兽人剑师', '兽人刀斧手', '兽人弓箭手', '兽人法师',
+      '红蜘蛛',
+      '骷髅弓箭手', '骷髅剑师', '骷髅法师', '骷髅海盗', '骷髅武士',
     ]
   },
   Defensive: {
     guardian: [
-      'Slime King', 'Zodiac Cancer', 'Alfadriel, the Light Titan'
+      '史莱姆之王', '癌症星座', '阿尔法德里尔，光之泰坦'
     ],
     sboss: [
-      'Ulliot, the Deathlord',
+      '死亡领主乌里奥特',
     ],
     other: [
-      'Angel Slime', 'Knight Slime', 'Crusader Slime',
-      'Green Spider',
-      'Skeleton Knight', 'Skeleton Warrior'
+      '天使史莱姆', '骑士史莱姆', '十字军史莱姆',
+      '绿蜘蛛',
+      '骷髅骑士', '骷髅战士'
     ]
   },
   Balanced: {
     guardian: [
-      'Tiamat, the Dragon Knight', 'Nameless Fallen King', 'Zodiac Aries'
+      '提亚马特，龙骑士', '无名堕落之王', '白羊座'
     ],
     sboss: [
-      'Ifrit', 'Shiva', 'Thanatos'
+      '幻灵之力', '湿婆', '桑纳托斯死神'
     ],
     other: [
-      'Goblin',
-      'Slime', 'Angel Slime', 'Knight Slime',
-      'Orc Swordsmaster', 'Orc Axe', 'Orc Archer', 'Orc Mage',
-      'Spider',
-      'Skeleton Knight', 'Skeleton Warrior'
+      '哥布林',
+      '史莱姆', '天使史莱姆', '骑士史莱姆',
+      '兽人剑师', '兽人刀斧手', '兽人弓箭手', '兽人法师',
+      '蜘蛛',
+      '骷髅骑士', '骷髅战士'
     ]
   },
   Quick: {
     guardian: [
-      'Llyrrad, the Ant Queen', 'Clockwork Spider'
+      '利拉德，蚁后', '发条蜘蛛'
     ],
     sboss: [
-      'Darkness Angel Reaper', 'Naizicher, the Spider Dragon'
+      '黑暗天使收割者', '奈齐尔，蜘蛛龙'
     ],
     other: [
-      'Goblin', 'Goblin Rogue', 'Goblin Archer',
-      'Wolf', 'Black Wolf', 'Winter Wolf',
-      'Orc Swordsmaster',
-      'Spider', 'Red Spider', 'Green Spider',
-      'Skeleton Swordsmaster', 'Skeleton Pirate', 'Skeleton Samurai'
+      '哥布林', '哥布林流氓', '哥布林弓箭手',
+      'Wolf', '黑狼', '冬狼',
+      '兽人剑师',
+      '蜘蛛', '红蜘蛛', '绿蜘蛛',
+      '骷髅剑师', '骷髅海盗', '骷髅武士'
     ]
   },
   Lethal: {
     guardian: [
-      'Aragorn, the Lethal Wolf', 'Cerberus Ptolemaios', 'Hellhound Inferni'
+      '阿拉贡，致命之狼', '三头犬·托勒密奥斯', '地狱恶犬'
     ],
     sboss: [
-      'Blood Manipulation Feral'
+      '血术野性'
     ],
     other: [
       'Goblin Rogue',
-      'Wolf', 'Black Wolf', 'Winter Wolf',
-      'Orc Swordsmaster', 'Orc Axe',
-      'Red Spider',
-      'Skeleton Swordsmaster', 'Skeleton Samurai'
+      'Wolf', '黑狼', '冬狼',
+      '兽人剑师', '兽人刀斧手',
+      '红蜘蛛',
+      '骷髅剑师', '骷髅武士'
     ]
   },
 }
