@@ -265,7 +265,7 @@ export const sellAll = (gameMain, rarity) => {
   const { player } = gameMain;
   if (rarity == "All") {
     if (player.inventory.equipment.length !== 0) {
-      sfxSell.play();
+      // sfxSell.play();
       for (let i = 0; i < player.inventory.equipment.length; i++) {
         const equipment = JSON.parse(player.inventory.equipment[i]);
         player.gold += equipment.value;

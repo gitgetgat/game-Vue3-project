@@ -3,6 +3,7 @@ import { createEquipmentPrint } from "./equipment.js";
 import { nFormatter, randomizeNum, randomizeDecimal, saveData } from "./utils.js";
 import { playerLoadStats } from "./player.js"
 import { startCombat, addCombatLog } from "./combat.js"
+import { percentages } from "../config/player.js"
 const generateBasicMap = () => {
   return {
     name: "Basic Map", // 地图名称
@@ -48,12 +49,11 @@ const dungeonEvent = (gameMain) => {
   // console.log('gameMain.auto', gameMain.auto);
   const { map, player } = gameMain;
   if (map.status.exploring && !map.status.event) {
-    console.log('---', map.status.exploring && !map.status.event, map.action);
     map.action++;
     let choices;
     let eventRoll;
     // let eventTypes = ["blessing", "curse", "treasure", "enemy", "enemy", "nothing", "nothing", "nothing", "nothing", "monarch"];
-    let eventTypes = ["treasure"];
+    let eventTypes = ["curse"];
     if (map.action > 2 && map.action < 6) {
       eventTypes.push("nextroom");
     } else if (map.action > 5) {
@@ -62,13 +62,8 @@ const dungeonEvent = (gameMain) => {
     const event = eventTypes[Math.floor(Math.random() * eventTypes.length)];
 
     switch (event) {
-      case "nextroom":
+      case "nextroom":// 房间
         map.status.event = true;
-        // choices = `
-        //             <div class="decision-panel">
-        //                 <button id="choice1">Enter</button>
-        //                 <button id="choice2">Ignore</button>
-        //             </div>`;
         if (map.progress.room == map.progress.roomLimit) {
           addDungeonLog(map, '找到了 BOOS 房间的门');
         } else {
@@ -81,166 +76,97 @@ const dungeonEvent = (gameMain) => {
         } else {
           gameMain.map.status.eventType = 'nextroom'
         }
-        // document.querySelector("#choice1").onclick = function () {
-        //   sfxConfirm.play();
-        //   if (dungeon.progress.room == dungeon.progress.roomLimit) {
-        //     guardianBattle();
-        //   } else {
-        //     eventRoll = randomizeNum(1, 3);
-        //     if (eventRoll == 1) {
-        //       incrementRoom();
-        //       mimicBattle("door");
-        //       addDungeonLog("You moved to the next floor.");
-        //     } else if (eventRoll == 2) {
-        //       incrementRoom();
-        //       choices = `
-        //                         <div class="decision-panel">
-        //                             <button id="choice1">Open the chest</button>
-        //                             <button id="choice2">Ignore</button>
-        //                         </div>`;
-        //       addDungeonLog(`You moved to the next room and found a treasure chamber. There is a <i class="fa fa-toolbox"></i>Chest inside.`, choices);
-        //       document.querySelector("#choice1").onclick = function () {
-        //         chestEvent();
-        //       }
-        //       document.querySelector("#choice2").onclick = function () {
-        //         dungeon.action = 0;
-        //         ignoreEvent();
-        //       };
-        //     } else {
-        //       dungeon.status.event = false;
-        //       incrementRoom();
-        //       addDungeonLog("You moved to the next room.");
-        //     }
-        //   }
-        // };
-        // document.querySelector("#choice2").onclick = function () {
-        //   dungeon.action = 0;
-        //   ignoreEvent();
-        // };
         break;
-      case "treasure":
+      case "treasure":// 宝箱
         map.status.event = true;
-        // choices = `
-        //             <div class="decision-panel">
-        //                 <button id="choice1">Open the chest</button>
-        //                 <button id="choice2">Ignore</button>
-        //             </div>`;
         addDungeonLog(map, `你发现了一个宝库。里面有一个宝箱。`);
-        // 打开宝箱或者忽略
-        // document.querySelector("#choice1").onclick = function () {
-        //   chestEvent();
-        // }
-        // document.querySelector("#choice2").onclick = function () {
-        //   ignoreEvent();
-        // };
-
         if (gameMain.auto.progress) {
           if (gameMain.auto.chest) {
             chestEvent(gameMain);
           } else {
             setTimeout(() => {
               map.status.event = false;
+              gameMain.map.status.eventType = ''
             }, 3000);
           }
         } else {
           gameMain.map.status.eventType = 'treasure'
         }
         break;
-      case "nothing":
+      case "nothing":// 无事发生
         gameMain.map.status.eventType = ''
         nothingEvent(map);
         break;
-      case "enemy":
+      case "enemy":// 敌人
         map.status.event = true;
-        // choices = `
-        //             <div class="decision-panel">
-        //                 <button id="choice1">Engage</button>
-        //                 <button id="choice2">Flee</button>
-        //             </div>`;
         const enemy = generateRandomEnemy(undefined, map);
         console.log('enemy', enemy);
         map.enemyBattleList.push(enemy);
         addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
-        player.inCombat = true;
-        // 进入战斗或者逃跑
-        // document.querySelector("#choice1").onclick = function () {
-        //   engageBattle();
-        // }
-        // document.querySelector("#choice2").onclick = function () {
-        //   fleeBattle();
-        // }
-
-        setTimeout(() => {
-          map.status.event = false;
-        }, 3000);
+        if (gameMain.auto.progress) {
+          if (gameMain.auto.chest) {
+            chestEvent(gameMain);
+          } else {
+            setTimeout(() => {
+              map.status.event = false;
+              gameMain.map.status.eventType = ''
+            }, 3000);
+          }
+        } else {
+          gameMain.map.status.eventType = 'enemy'
+        }
         break;
-      case "blessing":
+      case "blessing":// 祝福
         eventRoll = randomizeNum(1, 2);
         if (eventRoll == 1) {
           map.status.event = true;
           blessingValidation(player);
           let cost = getBlessingCost(player);
-          // choices = `
-          //               <div class="decision-panel">
-          //                   <button id="choice1">Offer</button>
-          //                   <button id="choice2">Ignore</button>
-          //               </div>`;
-          addDungeonLog(map, `您发现了一座祝福神龛。您是否想奉献 ${nFormatter(cost)} 以获得祝福？(祝福 Lv.${player.blessing})`);
-          // document.querySelector("#choice1").onclick = function () {
-          //   if (player.gold < cost) {
-          //     sfxDeny.play();
-          //     addDungeonLog("You don't have enough gold.");
-          //   } else {
-          //     player.gold -= cost;
-          //     sfxConfirm.play();
-          //     statBlessing();
-          //   }
-          //   dungeon.status.event = false;
-          // }
-          // document.querySelector("#choice2").onclick = function () {
-          //   ignoreEvent();
-          // };
-
-          setTimeout(() => {
-            map.status.event = false;
-          }, 3000);
+          addDungeonLog(map, `<span style="color:#fde047">您发现了一座祝福神龛。您是否想奉献</span> <svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg>${nFormatter(cost)} <span style="color:#fde047">以获得祝福？(祝福 Lv.${player.blessing})</span>`);
+          if (gameMain.auto.progress) {
+            if (gameMain.auto.chest) {
+              offerBlessingEvent(gameMain);
+            } else {
+              setTimeout(() => {
+                map.status.event = false;
+                gameMain.map.status.eventType = ''
+              }, 3000);
+            }
+          } else {
+            gameMain.map.status.eventType = 'blessing'
+          }
         } else {
+          map.status.event = false;
           gameMain.map.status.eventType = ''
           nothingEvent(map);
         }
         break;
-      case "curse":
-        console.log('你发现了诅咒神龛');
-        // eventRoll = randomizeNum(1, 3);
-        // if (eventRoll == 1) {
-        //   dungeon.status.event = true;
-        //   let curseLvl = Math.round((dungeon.settings.enemyScaling - 1) * 10);
-        //   let cost = curseLvl * (10000 * (curseLvl * 0.5)) + 5000;
-        //   choices = `
-        //                     <div class="decision-panel">
-        //                         <button id="choice1">Offer</button>
-        //                         <button id="choice2">Ignore</button>
-        //                     </div>`;
-        //   addDungeonLog(`<span class="Heirloom">You found a Cursed Totem. Do you want to offer <i class="fas fa-coins" style="color: #FFD700;"></i><span class="Common">${nFormatter(cost)}</span>? This will strengthen the monsters but will also improve the loot quality. (Curse Lv.${curseLvl})</span>`, choices);
-        //   document.querySelector("#choice1").onclick = function () {
-        //     if (player.gold < cost) {
-        //       sfxDeny.play();
-        //       addDungeonLog("You don't have enough gold.");
-        //     } else {
-        //       player.gold -= cost;
-        //       sfxConfirm.play();
-        //       cursedTotem(curseLvl);
-        //     }
-        //     dungeon.status.event = false;
-        //   }
-        //   document.querySelector("#choice2").onclick = function () {
-        //     ignoreEvent();
-        //   };
-        // } else {
-        //   nothingEvent();
-        // }
+      case "curse":// 诅咒
+        eventRoll = randomizeNum(1, 3);
+        if (eventRoll == 1) {
+          map.status.event = true;
+          let curseLvl = Math.round((map.settings.enemyScaling - 1) * 10);
+          let cost = curseLvl * (10000 * (curseLvl * 0.5)) + 5000;
+          addDungeonLog(map, `<span style="color:#e30b5c">您发现了一座诅咒神龛。您是否想奉献</span> <svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg>${nFormatter(cost)} <span style="color:#e30b5c">以获得诅咒？这将增强怪物的力量，同时也会提高战利品的质量。(诅咒 Lv.${curseLvl})</span>`);
+          if (gameMain.auto.progress) {
+            if (gameMain.auto.chest) {
+              offerCurseEvent(gameMain);
+            } else {
+              setTimeout(() => {
+                map.status.event = false;
+                gameMain.map.status.eventType = ''
+              }, 3000);
+            }
+          } else {
+            gameMain.map.status.eventType = 'curse'
+          }
+        } else {
+          map.status.event = false;
+          gameMain.map.status.eventType = ''
+          nothingEvent(map);
+        }
         break;
-      case "monarch":
+      case "monarch":// 超级精英怪
         console.log('你发现了一个神秘的房间。里面似乎有什么东西在沉睡。');
       // eventRoll = randomizeNum(1, 7);
       // if (eventRoll == 1) {
@@ -315,6 +241,7 @@ export const progressReset = (gameMain) => {
   gameMain.player.stats.hp = gameMain.player.stats.hpMax;
   gameMain.player.lvl = 1;
   gameMain.player.blessing = 1;
+  gameMain.player.rerolls = 2;
   gameMain.player.exp = {
     expCurr: 0,
     expMax: 100,
@@ -480,6 +407,7 @@ const mimicBattle = (type, gameMain) => {
   console.log('enemy', enemy);
   map.enemyBattleList.push(enemy);
   // showCombatInfo();
+  gameMain.map.status.event = true;
   gameMain.map.status.eventType = "enemy"
   addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
   // startCombat(gameMain);
@@ -493,10 +421,13 @@ const guardianBattle = (gameMain) => {
   const enemy = generateRandomEnemy("guardian", map);
   console.log('enemy', enemy);
   map.enemyBattleList.push(enemy);
+  gameMain.map.status.event = true;
+  gameMain.map.status.eventType = 'enemy'
+  addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
   // showCombatInfo();
-  startCombat(gameMain);
-  addCombatLog(gameMain, `Floor Guardian ${enemy.name} is blocking your way.`);
-  addDungeonLog(map, "你进入了下一层。");
+  // startCombat(gameMain, () => { addDungeonLog(map, "你进入了下一层。"); });
+  addCombatLog(gameMain, `地牢守护者 ${enemy.name} 挡住了你的去路。`);
+
 }
 
 // 开始战斗
@@ -580,26 +511,96 @@ const chestEvent = (gameMain) => {
 const goldDrop = (gameMain) => {
   const { map, player } = gameMain;
   let goldValue = randomizeNum(50, 500) * map.progress.floor;
-  addDungeonLog(map, `你找到了 <svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg><span class="mr-2" style="color:#fde047">${nFormatter(goldValue)}</span>黄金.`);
+  addDungeonLog(map, `你找到了<svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg><span class="mr-2" style="color:#fde047">${nFormatter(goldValue)}</span>黄金.`);
   player.gold += goldValue;
   playerLoadStats(gameMain);
 }
 
-const getBlessingCost = (player) => {
-  return player.blessing * (500 * (player.blessing * 0.5)) + 750;
-}
-const offerBlessingEvent = (player, map) => {
-  let cost = getBlessingCost(player);
+// 获取诅咒神龛
+const offerCurseEvent = (gameMain) => {
+  const { player, map } = gameMain
+  let curseLvl = Math.round((map.settings.enemyScaling - 1) * 10);
+  let cost = curseLvl * (10000 * (curseLvl * 0.5)) + 5000;
   if (player.gold < cost) {
-    // sfxDeny.play();
     addDungeonLog(map, "你的金币不够。");
   } else {
     player.gold -= cost;
-    // sfxConfirm.play();
-    statBlessing(player);
+    cursedTotem(gameMain);
   }
   map.status.event = false;
+  gameMain.map.status.eventType = ''
 }
+// 叠加诅咒buff，增加怪物战力膨胀系数
+const cursedTotem = (gameMain) => {
+  const { map } = gameMain
+  const curseLvl = Math.round((map.settings.enemyScaling - 1) * 10)
+  map.settings.enemyScaling += 0.1;
+  addDungeonLog(map, `地下城中的怪物变得更强，战利品质量也提高了. (诅咒 Lv.${curseLvl} > 诅咒 Lv.${curseLvl + 1})`);
+  saveData(gameMain);
+}
+// 计算祝福升级需要的金钱
+const getBlessingCost = (player) => {
+  return player.blessing * (500 * (player.blessing * 0.5)) + 750;
+}
+// 获取祝福神龛
+const offerBlessingEvent = (gameMain) => {
+  const { player, map } = gameMain
+  let cost = getBlessingCost(player);
+  if (player.gold < cost) {
+    addDungeonLog(map, "你的金币不够。");
+  } else {
+    player.gold -= cost;
+    statBlessing(gameMain);
+  }
+  map.status.event = false;
+  gameMain.map.status.eventType = ''
+}
+
+
+// 升级随机祝福buff
+const statBlessing = (gameMain) => {
+  const { player, map } = gameMain
+  // sfxBuff.play();
+  let stats = ["hp", "atk", "def", "atkSpd", "vamp", "critRate", "critDmg"];
+  let buff = stats[Math.floor(Math.random() * stats.length)];
+  let value;
+  player.bonusStats[buff] += percentages[buff].value
+  // switch (buff) {
+  //   case "hp":
+  //     value = 10;
+  //     player.bonusStats.hp += value;
+  //     break;
+  //   case "atk":
+  //     value = 8;
+  //     player.bonusStats.atk += value;
+  //     break;
+  //   case "def":
+  //     value = 8;
+  //     player.bonusStats.def += value;
+  //     break;
+  //   case "atkSpd":
+  //     value = 3;
+  //     player.bonusStats.atkSpd += value;
+  //     break;
+  //   case "vamp":
+  //     value = 0.5;
+  //     player.bonusStats.vamp += value;
+  //     break;
+  //   case "critRate":
+  //     value = 1;
+  //     player.bonusStats.critRate += value;
+  //     break;
+  //   case "critDmg":
+  //     value = 6;
+  //     player.bonusStats.critDmg += value;
+  //     break;
+  // }
+  addDungeonLog(map, `你从祝福中获得 ${percentages[buff].value}% 的额外 ${percentages[buff].label}。 (祝福等级 Lv.${player.blessing} > 祝福等级 Lv.${player.blessing + 1})`);
+  blessingUp(player);
+  playerLoadStats(gameMain);
+  saveData(gameMain);
+}
+
 
 // ========= 非选择地图事件消息 ==========
 // 不发生任何事的随机事件
@@ -660,5 +661,6 @@ export {
   ignoreEvent,
   continueExploring,
   addDungeonLog,
-  offerBlessingEvent
+  offerBlessingEvent,
+  offerCurseEvent,
 }

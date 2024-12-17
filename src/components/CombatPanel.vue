@@ -2,7 +2,7 @@
   <AlertDialog :open="combatOpen">
     <AlertDialogOverlay class="fixed inset-0 z-[50] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
     <AlertDialogContent
-      class="md:w-[400px] mobile:w-full z-[50]"
+      class="md:w-[400px] mobile:w-full z-[50] rounded-lg"
       @escapeKeyDown.prevent
       @openAutoFocus.prevent
     >
@@ -23,7 +23,7 @@
           <span class="absolute text-xs z-1 left-1">{{currEnemy.stats.hp}}/{{ currEnemy.stats.hpMax }}（{{ currEnemy.stats.hpPercent }}%）</span>
         </div>
         <img
-          src="../../public/wolf_winter.png"
+          :src="`../../public/${currEnemy.image.name}${currEnemy.image.type}`"
           alt="Photo by Drew Beamer"
           class="rounded-md object-cover mx-auto h-40 w-40 mb-4 block"
         >

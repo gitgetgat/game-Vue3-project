@@ -330,7 +330,7 @@ const setEnemyImg = (enemy) => {
       enemy.image.name = 'goblin_archer';
       enemy.image.size = '50%';
       break;
-    case '哥布林流氓':
+    case '哥布林法师':
       enemy.image.name = 'goblin_mage';
       enemy.image.size = '50%';
       break;

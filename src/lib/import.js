@@ -33,7 +33,7 @@ export {
 } from '@/components/ui/number-field'
 export { VisuallyHidden } from 'radix-vue'
 export { Toaster } from '@/components/ui/toast'
-export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon, progressReset } from "../lib/dungeon"
+export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon, progressReset, offerBlessingEvent, offerCurseEvent } from "../lib/dungeon"
 export { playerLoadStats, objectValidation, calculateStats, generateLvlStats, handleSelectedLvlStat } from "../lib/player";
 export { startCombat } from "../lib/combat";
 export { equipmentIcon, equipmentStatsTransform, sellAll, equipOrUnEquipment, sellEquipment, unequipAll } from "../lib/equipment";
@@ -41,6 +41,6 @@ export { nFormatter, randomizeNum, saveData } from "../lib/utils";
 export { equipmentRarityList } from "../config/equipment"
 export { skillsDesc, prefixNames, names, skills } from "../config/player"
 export { X } from 'lucide-vue-next';
-export { onMounted, ref, watchEffect, computed, nextTick, provide } from 'vue'
+export { onMounted, ref, watchEffect, computed, nextTick, provide, useTemplateRef } from 'vue'
 export { useColorMode } from '@vueuse/core'
 export { useToast } from '@/components/ui/toast/use-toast'

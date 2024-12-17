@@ -15,7 +15,7 @@ const normalDamage = ` 伤害`
 // }
 
 // 开始战斗
-const startCombat = (gameMain) => {
+const startCombat = (gameMain, endCallback = null) => {
   const { player, map } = gameMain;
   player.inCombat = true;
   let enemy = null
@@ -25,8 +25,8 @@ const startCombat = (gameMain) => {
   if (!enemy) return
 
   // 启动玩家和敌人攻击的计时器以及战斗计时器
-  setTimeout(() => { playerAttack(gameMain) }, (1000 / player.stats.atkSpd));
-  setTimeout(() => { enemyAttack(gameMain) }, (1000 / enemy.stats.atkSpd));
+  setTimeout(() => { playerAttack(gameMain, endCallback) }, (1000 / player.stats.atkSpd));
+  setTimeout(() => { enemyAttack(gameMain, endCallback) }, (1000 / enemy.stats.atkSpd));
 
   playerLoadStats(gameMain);
   enemyLoadStats(enemy);
@@ -39,7 +39,7 @@ const startCombat = (gameMain) => {
 }
 
 // 结束战斗
-const endCombat = (gameMain) => {
+const endCombat = (gameMain, endCallback = null) => {
   const { player } = gameMain;
   player.inCombat = false;
   // Skill validation
@@ -61,6 +61,7 @@ const endCombat = (gameMain) => {
   // 停止战斗中的所有计时器
   clearInterval(gameMain.combat.combatTimer);
   gameMain.combat.combatSeconds = 0;
+  if (endCallback) endCallback()
 }
 
 // 战斗计时
@@ -69,7 +70,7 @@ const combatCounter = (gameMain) => {
 }
 
 // ========== Validation ==========
-const hpValidation = (gameMain) => {
+const hpValidation = (gameMain, endCallback = null) => {
   const { player, map } = gameMain;
   let enemy = null
   if (gameMain.map.enemyBattleList.length > gameMain.combat.enemyCurrId) {
@@ -98,7 +99,7 @@ const hpValidation = (gameMain) => {
     //   clearInterval(playTimer);
     //   progressReset();
     // });
-    endCombat(gameMain);
+    endCombat(gameMain, endCallback);
   } else if (enemy.stats.hp < 1) {
     // Gives out all the reward and show the claim button
     enemy.stats.hp = 0;
@@ -134,7 +135,7 @@ const hpValidation = (gameMain) => {
     //   enemyDead = false;
     //   combatBacklog.length = 0;
     // });
-    endCombat(gameMain);
+    endCombat(gameMain, endCallback);
   }
 }
 
@@ -147,7 +148,7 @@ const confirmPlayerDied = function (gameMain) {
 }
 
 // ========== Attack Functions ==========
-const playerAttack = (gameMain) => {
+const playerAttack = (gameMain, endCallback = null) => {
   const { player } = gameMain;
   let enemy = null
   if (gameMain.map.enemyBattleList.length > gameMain.combat.enemyCurrId) {
@@ -215,7 +216,7 @@ const playerAttack = (gameMain) => {
   enemy.stats.hp -= damage;
   player.stats.hp += lifesteal;
   addCombatLog(gameMain, `${player.name} 对 ${enemy.name} 造成了 ` + nFormatter(damage) + `点 ${dmgtype}。`);
-  hpValidation(gameMain);
+  hpValidation(gameMain, endCallback);
   playerLoadStats(gameMain);
   enemyLoadStats(enemy);
 
@@ -251,7 +252,7 @@ const playerAttack = (gameMain) => {
   }
 }
 
-const enemyAttack = (gameMain) => {
+const enemyAttack = (gameMain, endCallback = null) => {
   const { player } = gameMain;
   let enemy = null
   if (gameMain.map.enemyBattleList.length > gameMain.combat.enemyCurrId) {
@@ -297,7 +298,7 @@ const enemyAttack = (gameMain) => {
   }
   enemy.stats.hp += lifesteal;
   addCombatLog(gameMain, `${enemy.name} 对 ${player.name} 造成了 ` + nFormatter(damage) + `点 ${dmgtype}。`);
-  hpValidation(gameMain);
+  hpValidation(gameMain, endCallback);
   playerLoadStats(gameMain);
   enemyLoadStats(enemy);
 

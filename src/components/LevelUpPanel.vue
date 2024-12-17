@@ -23,7 +23,7 @@
             class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
             @click="handleRellGenerateLvlStats"
           >
-            重来 {{ rerolls }} / {{ gameMain.player.rerolls }}
+            重来 {{ rerolls }}/{{ gameMain.player.rerolls }}
           </Button>
         </div>
         <div class="flex items-center flex-col w-full space-y-4">
