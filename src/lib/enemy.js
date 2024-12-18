@@ -299,8 +299,6 @@ const setEnemyStats = (enemy, condition, map) => {
     enemy.rewards.drop = false;
   }
 
-  enemy.rewards.drop = true
-
   enemy.stats.hp = enemy.stats.hpMax;
   enemy.stats.hpPercent = 100;
 

@@ -43,7 +43,13 @@
             ></div>
           </div>
         </div>
-        <ScrollArea class="border rounded-md p-2 h-[260px]">
+        <ScrollArea
+          id="combatLog"
+          @mouseover="isHovered = true"
+          @mouseleave="isHovered = false"
+          :class="{ 'hover-scroll': isHovered }"
+          class="border rounded-md p-2 h-[260px]"
+        >
           <div
             class="mb-2 flex items-center align-middle"
             v-for="(msg,idx) in gameMain.combat.combatBacklog"
@@ -96,7 +102,7 @@
 </template>
 
 <script setup>
-import { inject } from 'vue'
+import { inject, ref } from 'vue'
 import {
   AlertDialogOverlay,
 } from 'radix-vue';
@@ -107,6 +113,8 @@ import { VisuallyHidden, ScrollArea } from '../lib/import'
 import { Button } from '@/components/ui/button'
 
 const gameMain = inject('gameMain')
+
+const isHovered = ref(false)
 
 const props = defineProps({
   combatOpen: { type: Boolean, required: true },
@@ -129,7 +137,7 @@ const ignoreEndBattle = () => {
   emits('ignoreEndBattle')
 }
 const failedGame = () => {
-  emits('failedGame')
+  emits('failedGame', false)
 }
 
 </script>

@@ -13,7 +13,7 @@ import {
   Toaster, X,
   // functions
   useColorMode, useToast,
-  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, offerBlessingEvent, offerCurseEvent,
+  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, offerBlessingEvent, offerCurseEvent, specialBossBattle,
   // config
   equipmentRarityList, skillsDesc, prefixNames, names, skills,
 } from '../lib/import'
@@ -26,6 +26,7 @@ import LevelUpPanel from './LevelUpPanel.vue'
 import MenuBackpack from './MenuBackpack.vue'
 import GameCover from './GameCover.vue'
 import MenuPanel from './MenuPanel.vue'
+import DataImportExport from './DataImportExport.vue'
 import dayjs from 'dayjs'
 
 let gameMain = ref(null)
@@ -45,12 +46,14 @@ let coverLoading = ref(true)
 
 const mode = useColorMode()
 const toggleState = ref(false)
+const isHovered = ref(false)
 watchEffect(() => {
   mode.value = toggleState.value ? 'light' : 'dark'
 })
 const skillSelectVal = ref('Remnant Razor') // 背包-装备类型下拉筛选
 const GameBeginSetConfigOpen = ref(false) // 初始配置菜单是否打开
 const menuBackpackOpen = ref(false) // 背包是否打开
+const dataImportExportOpen = ref(false) // 导入导出是否打开
 const equipmentShowOpen = ref(false) // 装备展示是否打开
 const menuQuitOpen = ref(false) // 放弃本局是否打开
 const levelUpOpen = ref(false) // 升级窗口是否打开
@@ -58,6 +61,17 @@ const saleEquipmentOpen = ref(false) // 出售装备是否打开
 const menuCfgOpen = ref(false) // 菜单是否打开
 const combatOpen = ref(false) // 战斗窗口是否打开
 
+const resetOpenCfg = () => {
+  menuBackpackOpen.value = false
+  menuBackpackOpen.value = false
+  dataImportExportOpen.value = false
+  equipmentShowOpen.value = false
+  menuQuitOpen.value = false
+  levelUpOpen.value = false
+  saleEquipmentOpen.value = false
+  menuCfgOpen.value = false
+  combatOpen.value = false
+}
 // 地图计时器
 const dungeonTime = computed(() => dayjs(gameMain.value.dungeonTime + (new Date().getTimezoneOffset()) * 60 * 1000).format('HH:mm:ss'))
 
@@ -74,10 +88,10 @@ const skillsDescList = ref(skillsDesc)
 // 属性分配
 let allocation = ref({
   name: '',
-  hp: 5,
-  atk: 5,
-  def: 5,
-  atkSpd: 5
+  hp: 16,
+  atk: 7,
+  def: 7,
+  atkSpd: 10
 })
 
 // 剩余属性分配点
@@ -175,7 +189,7 @@ const generateGame = () => {
       equipped: [], // 装备栏
       equippedLimit: 6, // 装备栏数量限制
       rerolls: 2, // 可以重置选取升级属性的次数
-      gold: 999990, // 金币数
+      gold: 0, // 金币数
       blessing: 1, // 祝福
       playtime: 0, // 游戏时长
       kills: 0, // 杀死的怪物数
@@ -207,11 +221,10 @@ const handleDungeonToggleStartPause = () => {
 }
 
 // 确认放弃按钮
-const handleFailedGame = () => {
+const handleFailedGame = (isReopen) => {
   clearInterval(gameMain.value.map.dungeonTimer);
   clearInterval(gameMain.value.player.playTimer);
-  gameMain.value.player.inventory.equipment.length = 0;
-  gameMain.value.player.equipped.length = 0;
+
   gameMain.value.player.gold = 0;
   progressReset(gameMain.value);
   skillSelectVal.value = 'Remnant Razor'
@@ -222,8 +235,12 @@ const handleFailedGame = () => {
   coverLoading.value = true
   gameMainLoading.value = false
   gameWindowLoading.value = false
-  localStorage.removeItem("gameMain");
-  gameMain.value = null
+  if (isReopen) {
+    gameMain.value.player.inventory.equipment.length = 0;
+    gameMain.value.player.equipped.length = 0;
+    localStorage.removeItem("gameMain");
+    gameMain.value = null
+  }
 }
 
 // 打开宝箱
@@ -245,6 +262,8 @@ const handleEngageBattle = () => {
 const handleChooseNextroomEvent = () => {
   if (gameMain.value.map.status.eventType === 'nextroom') {
     chooseNextroomEvent(gameMain.value)
+  } else if (gameMain.value.map.status.eventType === 'monarch') {
+    specialBossBattle(gameMain.value)
   }
 }
 // 逃避战斗
@@ -268,10 +287,7 @@ const handleIgnoreEndBattle = () => {
 }
 // 忽略事件
 const handleIgnoreEvent = () => {
-  if (gameMain.value.map.status.eventType === 'nextroom') {
-    gameMain.value.map.action = 0;
-    ignoreEvent(gameMain.value.map)
-  } else if (['treasure', 'equipment', 'blessing'].includes(gameMain.value.map.status.eventType)) {
+  if (['treasure', 'equipment', 'blessing', 'curse', 'nextroom', 'monarch'].includes(gameMain.value.map.status.eventType)) {
     gameMain.value.map.action = 0;
     ignoreEvent(gameMain.value.map)
   }
@@ -405,10 +421,10 @@ const handleCloseAllocation = () => {
 // 重置属性分配
 const handleResetAttrPoints = () => {
   allocation.value.name = ''
-  allocation.value.hp = 5
-  allocation.value.atk = 5
-  allocation.value.def = 5
-  allocation.value.atkSpd = 5
+  allocation.value.hp = 16
+  allocation.value.atk = 7
+  allocation.value.def = 7
+  allocation.value.atkSpd = 10
 }
 
 // 随机名称
@@ -545,6 +561,22 @@ const initGame = () => {
   })
 }
 
+// 导入数据
+const importToInit = (value) => {
+  handleFailedGame(true)
+  saveData(value)
+  initGame()
+  resetOpenCfg()
+  GameBeginSetConfigOpen.value = false
+  coverLoading.value = false
+  gameMainLoading.value = true
+  gameWindowLoading.value = false
+  setTimeout(() => {
+    gameMainLoading.value = false
+    gameWindowLoading.value = true
+  }, randomizeNum(1000, 3000));
+}
+
 // 计算属性，判断是否为移动端
 const isMobile = computed(() => {
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -553,8 +585,6 @@ const isMobile = computed(() => {
 onMounted(() => {
   mode.value = 'dark'
   initGame()
-
-  // console.log('gameMain', gameMain);
 })
 
 </script>
@@ -784,7 +814,10 @@ onMounted(() => {
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <MenuPanel v-model:menuCfgOpen="menuCfgOpen"></MenuPanel>
+        <MenuPanel
+          v-model:menuCfgOpen="menuCfgOpen"
+          v-model:dataImportExportOpen="dataImportExportOpen"
+        />
       </p>
       <p class="grow-0 mr-2 top-panel-menu-button hover-button">
         <TooltipProvider>
@@ -829,7 +862,13 @@ onMounted(() => {
       </div>
     </div>
     <!-- <div class="flex-1 border mb-2 rounded-lg"></div> -->
-    <ScrollArea class="flex-1 mb-2 rounded-lg border p-4 relative">
+    <ScrollArea
+      id="mapLog"
+      @mouseover="isHovered = true"
+      @mouseleave="isHovered = false"
+      :class="{ 'hover-scroll': isHovered }"
+      class="flex-1 mb-2 rounded-lg border p-4 relative"
+    >
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger
@@ -893,7 +932,7 @@ onMounted(() => {
           战斗
         </Button>
         <Button
-          v-if="['nextroom'].includes(gameMain.map.status.eventType)"
+          v-if="['nextroom','monarch'].includes(gameMain.map.status.eventType)"
           variant="outline"
           class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
           @click="handleChooseNextroomEvent"
@@ -926,7 +965,7 @@ onMounted(() => {
           获取
         </Button>
         <Button
-          v-if="['treasure','nextroom','equipment','blessing','curse'].includes(gameMain.map.status.eventType)"
+          v-if="['treasure','nextroom','equipment','blessing','curse','monarch'].includes(gameMain.map.status.eventType)"
           variant="outline"
           class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
           @click="handleIgnoreEvent"
@@ -965,6 +1004,7 @@ onMounted(() => {
     @failedGame="handleFailedGame"
   />
   <!-- 放弃本局游戏 end -->
+  <!-- 战斗面板 begin -->
   <CombatPanel
     v-if="currEnemy || (gameMain && gameMain.player.inCombat)"
     :combatOpen="combatOpen"
@@ -976,11 +1016,15 @@ onMounted(() => {
     @endBattle="handleEndBattle"
     @ignoreEndBattle="handleIgnoreEndBattle"
     @failedGame="handleFailedGame"
-  ></CombatPanel>
+  />
+  <!-- 战斗面板 end -->
+  <!-- 升级面板 begin -->
   <LevelUpPanel
     v-if="levelUpOpen"
     :levelUpOpen="levelUpOpen"
-  ></LevelUpPanel>
+  />
+  <!-- 升级面板 end -->
+  <!-- 背包 begin -->
   <MenuBackpack
     v-model:menuBackpackOpen="menuBackpackOpen"
     :isMobile="isMobile"
@@ -990,6 +1034,13 @@ onMounted(() => {
     @equipOrUnequipEquipment="handleEquipOrUnequipEquipment"
     @handleEquipmentShow="handleEquipmentShow"
     @equipmentSale="handleShowSaleEquipment"
-  ></MenuBackpack>
+  />
+  <!-- 背包 end -->
+  <!-- 导入导出 begin -->
+  <DataImportExport
+    v-model:dataImportExportOpen="dataImportExportOpen"
+    @importToInit="importToInit"
+  />
+  <!-- 导入导出 end -->
   <Toaster />
 </template>

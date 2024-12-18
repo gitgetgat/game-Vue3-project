@@ -39,7 +39,10 @@
         >
           设置
         </div>
-        <div class="hover-menu-button w-full">
+        <div
+          class="hover-menu-button w-full"
+          @click="openImportDataPanel"
+        >
           导出/导入 存档
         </div>
       </div>
@@ -266,13 +269,19 @@ const gameCfgDefaultVal = 'autoCombat' // 默认展开的设置面板
 
 const props = defineProps({
   menuCfgOpen: { type: Boolean, required: true },
+  dataImportExportOpen: { type: Boolean, required: true },
 });
 const emits = defineEmits([
-  'update:menuCfgOpen'
+  'update:menuCfgOpen',
+  'update:dataImportExportOpen'
 ]);
 
 const closeMenuCfgOpen = () => {
   emits('update:menuCfgOpen', false);
+};
+
+const openImportDataPanel = () => {
+  emits('update:dataImportExportOpen', true);
 };
 
 const dealPlaytime = computed(() => {

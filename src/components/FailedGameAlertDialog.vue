@@ -52,7 +52,7 @@ const closeEquipmentShow = () => {
   emits('update:menuQuitOpen', false);
 };
 const handleFailedGame = () => {
-  emits('failedGame');
+  emits('failedGame', true);
 }
 
 </script>

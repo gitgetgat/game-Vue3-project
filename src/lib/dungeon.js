@@ -52,8 +52,7 @@ const dungeonEvent = (gameMain) => {
     map.action++;
     let choices;
     let eventRoll;
-    // let eventTypes = ["blessing", "curse", "treasure", "enemy", "enemy", "nothing", "nothing", "nothing", "nothing", "monarch"];
-    let eventTypes = ["curse"];
+    let eventTypes = ["blessing", "curse", "treasure", "enemy", "enemy", "nothing", "nothing", "nothing", "nothing", "monarch"];
     if (map.action > 2 && map.action < 6) {
       eventTypes.push("nextroom");
     } else if (map.action > 5) {
@@ -100,7 +99,7 @@ const dungeonEvent = (gameMain) => {
       case "enemy":// 敌人
         map.status.event = true;
         const enemy = generateRandomEnemy(undefined, map);
-        console.log('enemy', enemy);
+        // console.log('enemy', enemy);
         map.enemyBattleList.push(enemy);
         addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
         if (gameMain.auto.progress) {
@@ -167,25 +166,27 @@ const dungeonEvent = (gameMain) => {
         }
         break;
       case "monarch":// 超级精英怪
-        console.log('你发现了一个神秘的房间。里面似乎有什么东西在沉睡。');
-      // eventRoll = randomizeNum(1, 7);
-      // if (eventRoll == 1) {
-      //   dungeon.status.event = true;
-      //   choices = `
-      //                     <div class="decision-panel">
-      //                         <button id="choice1">Enter</button>
-      //                         <button id="choice2">Ignore</button>
-      //                     </div>`;
-      //   addDungeonLog(`<span class="Heirloom">You found a mysterious chamber. It seems like there is something sleeping inside.</span>`, choices);
-      //   document.querySelector("#choice1").onclick = function () {
-      //     specialBossBattle();
-      //   }
-      //   document.querySelector("#choice2").onclick = function () {
-      //     ignoreEvent();
-      //   };
-      // } else {
-      //   nothingEvent();
-      // }
+        eventRoll = randomizeNum(1, 7);
+        if (eventRoll == 1) {
+          map.status.event = true;
+          addDungeonLog(map, `<span style="color:#e30b5c">你发现了一个神秘的房间。好像有什么东西在里面睡觉。</span>`);
+          if (gameMain.auto.progress) {
+            if (gameMain.auto.chest) {
+              specialBossBattle(gameMain);
+            } else {
+              setTimeout(() => {
+                map.status.event = false;
+                gameMain.map.status.eventType = ''
+              }, 3000);
+            }
+          } else {
+            gameMain.map.status.eventType = 'monarch'
+          }
+        } else {
+          map.status.event = false;
+          gameMain.map.status.eventType = ''
+          nothingEvent(map);
+        }
     }
   }
 }
@@ -211,6 +212,8 @@ const initialDungeonLoad = (gameMain) => {
   gameMain.map.dungeonActivity = "探索";
   gameMain.map.dungeonTimer = setInterval(() => {
     dungeonEvent(gameMain)
+    mapLogScorllAuto()
+    combatLogScorllAuto()
   }, gameMain.map.dungeonEnentTime);
   // 玩家同时只能刷一个地图
   if (gameMain.player) gameMain.player.playTimer = setInterval(() => {
@@ -428,6 +431,20 @@ const guardianBattle = (gameMain) => {
   // startCombat(gameMain, () => { addDungeonLog(map, "你进入了下一层。"); });
   addCombatLog(gameMain, `地牢守护者 ${enemy.name} 挡住了你的去路。`);
 
+}
+
+
+// 守护者首领之战
+const specialBossBattle = (gameMain) => {
+  const { map } = gameMain;
+  const enemy = generateRandomEnemy("sboss", map);
+  console.log('enemy', enemy);
+  map.enemyBattleList.push(enemy);
+  gameMain.map.status.event = true;
+  gameMain.map.status.eventType = 'enemy'
+  addDungeonLog(map, `<span style="color:#e30b5c">地牢守护者 ${enemy.name} 醒来了。</span>`);
+  // startCombat(gameMain);
+  addCombatLog(gameMain, `<span style="color:#e30b5c">地牢守护者 ${enemy.name} 醒来了。</span>`);
 }
 
 // 开始战斗
@@ -650,6 +667,78 @@ const continueExploring = (gameMain) => {
   }
 }
 
+// 地图日志自动滚动
+const mapLogScorllAuto = () => {
+  const parentNode = document.querySelector("#mapLog")
+  if (parentNode && !parentNode.classList.contains('hover-scroll')) {
+    const mapLog = Array.from(parentNode.children).find(e => e.tagName === 'DIV');
+    mapLog.scrollTop = mapLog.scrollHeight;
+  }
+}
+
+// 战斗日志自动滚动
+const combatLogScorllAuto = () => {
+  const parentNode = document.querySelector("#combatLog")
+  if (parentNode && !parentNode.classList.contains('hover-scroll')) {
+    const combatLog = Array.from(parentNode.children).find(e => e.tagName === 'DIV');
+    combatLog.scrollTop = combatLog.scrollHeight;
+  }
+}
+
+// Export and Import Save Data
+const exportData = (gameMain) => {
+  const exportedData = btoa(JSON.stringify(gameMain));
+  return exportedData;
+}
+
+const importData = (importedData, errorCallback = null) => {
+  try {
+    let playerImport = JSON.parse(atob(importedData));
+    if (playerImport.inventory !== undefined) {
+      // sfxOpen.play();
+      // defaultModalElement.style.display = "none";
+      // confirmationModalElement.style.display = "flex";
+      // confirmationModalElement.innerHTML = `
+      //       <div class="content">
+      //           <p>Are you sure you want to import this data? This will erase the current data and reset your dungeon progress.</p>
+      //           <div class="button-container">
+      //               <button id="import-btn">Import</button>
+      //               <button id="cancel-btn">Cancel</button>
+      //           </div>
+      //       </div>`;
+      // let confirm = document.querySelector("#import-btn");
+      // let cancel = document.querySelector("#cancel-btn");
+      // confirm.onclick = function () {
+      //   sfxConfirm.play();
+      //   player = playerImport;
+      //   saveData();
+      //   bgmDungeon.stop();
+      //   let dimDungeon = document.querySelector('#dungeon-main');
+      //   dimDungeon.style.filter = "brightness(100%)";
+      //   dimDungeon.style.display = "none";
+      //   menuModalElement.style.display = "none";
+      //   menuModalElement.innerHTML = "";
+      //   confirmationModalElement.style.display = "none";
+      //   confirmationModalElement.innerHTML = "";
+      //   defaultModalElement.style.display = "none";
+      //   defaultModalElement.innerHTML = "";
+      //   runLoad("title-screen", "flex");
+      //   clearInterval(dungeonTimer);
+      //   clearInterval(playTimer);
+      //   progressReset();
+      // }
+      // cancel.onclick = function () {
+      //   sfxDecline.play();
+      //   confirmationModalElement.style.display = "none";
+      //   confirmationModalElement.innerHTML = "";
+      //   defaultModalElement.style.display = "flex";
+      // }
+    } else {
+    }
+  } catch (err) {
+  }
+}
+
 export {
   initialDungeonLoad,
   dungeonToggleStartPause,
@@ -663,4 +752,6 @@ export {
   addDungeonLog,
   offerBlessingEvent,
   offerCurseEvent,
+  specialBossBattle,
+  exportData,
 }
