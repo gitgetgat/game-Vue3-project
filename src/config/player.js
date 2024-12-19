@@ -1,11 +1,11 @@
 const percentages = { // 升级时的选项
-  "hp": { label: '生命值', value: 10 },
-  "atk": { label: '攻击力', value: 8 },
-  "def": { label: '防御力', value: 8 },
-  "atkSpd": { label: '攻击速度', value: 3 },
-  "vamp": { label: '吸血', value: 0.5 },
-  "critRate": { label: '暴击率', value: 1 },
-  "critDmg": { label: '暴击伤害', value: 6 }
+  "hp": { label: '生命值', value: 10, key: "hp" },
+  "atk": { label: '攻击力', value: 8, key: "atk" },
+  "def": { label: '防御力', value: 8, key: "def" },
+  "atkSpd": { label: '攻击速度', value: 3, key: "atkSpd" },
+  "vamp": { label: '吸血', value: 0.5, key: "vamp" },
+  "critRate": { label: '暴击率', value: 1, key: "critRate" },
+  "critDmg": { label: '暴击伤害', value: 6, key: "critDmg" }
 };
 
 const skills = [

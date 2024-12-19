@@ -69,7 +69,7 @@
         </VisuallyHidden>
       </DialogHeader>
       <div class="flex flex-col items-center space-x-2">
-        <div class="flex items-center justify-between w-full">
+        <div class="flex items-center justify-between w-full mb-1.5">
           <Label class="text-base">
             <Icon
               icon="game-icons:entry-door"
@@ -150,7 +150,7 @@
               </div>
             </AccordionContent>
           </AccordionItem>
-          <!-- <AccordionItem
+          <AccordionItem
             class="border-none"
             key="buffLevel"
             value="buffLevel"
@@ -158,38 +158,32 @@
             <AccordionTrigger class="hover:no-underline py-1.5">
               <div class="inline-block">
                 <Icon
-                  icon="game-icons:gooey-eyed-sun"
+                  icon="ic:round-move-up"
                   class="!size-4 border-none inline-block mr-1.5"
-                />buff 等级
+                />升级 Buff 优先级
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <NumberField
-                :default-value="0"
-                :min="0"
-                class="flex items-center justify-between"
+              <VueDraggable
+                ref="el"
+                v-model="gameMain.auto.percentages"
+                :animation="150"
+                ghostClass="ghost"
+                class="flex flex-col gap-2 p-1 w-full h-fit m-auto rounded"
               >
-                <Label>祝福雕像</Label>
-                <NumberFieldContent>
-                  <NumberFieldDecrement />
-                  <NumberFieldInput class="w-24" />
-                  <NumberFieldIncrement />
-                </NumberFieldContent>
-              </NumberField>
-              <NumberField
-                :default-value="0"
-                :min="0"
-                class="flex items-center justify-between"
-              >
-                <Label>灾厄雕像</Label>
-                <NumberFieldContent>
-                  <NumberFieldDecrement />
-                  <NumberFieldInput class="w-24" />
-                  <NumberFieldIncrement />
-                </NumberFieldContent>
-              </NumberField>
+                <div
+                  v-for="item in gameMain.auto.percentages"
+                  :key="item.key"
+                  class="cursor-move h-fit rounded px-1 py-0.5 hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))]"
+                >
+                  <Icon
+                    icon="nimbus:drag-dots"
+                    class="!size-4 border-none inline-block mr-1.5"
+                  />{{ item.label }} +{{ item.value }}%
+                </div>
+              </VueDraggable>
             </AccordionContent>
-          </AccordionItem> -->
+          </AccordionItem>
         </Accordion>
       </div>
     </DialogContent>
@@ -221,19 +215,23 @@
 <script setup>
 import dayjs from "dayjs"
 import {
+  VueDraggable
+} from "vue-draggable-plus";
+import {
   DialogOverlay,
 } from 'radix-vue';
 import { Button } from '@/components/ui/button'
 import { nFormatter } from "../lib/utils";
 import {
   // components
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, VisuallyHidden, DialogDescription, X, Icon, Label, Switch, Accordion, AccordionContent, AccordionItem, AccordionTrigger, NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput, closeInventory,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, VisuallyHidden, DialogDescription, X, Icon, Label, Switch, Accordion, AccordionContent, AccordionItem, AccordionTrigger, NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput, closeInventory, percentages
 } from '../lib/import'
 import { ref, computed, inject } from 'vue'
 const gameMain = inject('gameMain')
 const gameCfgOpen = ref(false) // 游戏设置是否打开
 const userStasticOpen = ref(false) // 游戏设置是否打开
 
+const percentagesList = ref(percentages)
 // 设置面板 begin
 const gameCfgDefaultVal = 'autoCombat' // 默认展开的设置面板
 // 设置面板 end
@@ -260,3 +258,9 @@ const dealPlaytime = computed(() => {
   return dayjs(gameMain.value.player.playtime * 1000 + (new Date().getTimezoneOffset()) * 60 * 1000).format('HH:mm:ss')
 })
 </script>
+<style scoped>
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
+</style>

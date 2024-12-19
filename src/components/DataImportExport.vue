@@ -27,13 +27,25 @@
           >
             导入存档
           </Button>
-          <Button
-            variant="outline"
-            class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
-            @click="exportDataToCopy"
-          >
-            {{ btnText }}
-          </Button>
+          <div class="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white grow"
+              @click="exportDataToCopy"
+            >
+              {{ btnText }}
+            </Button>
+            <Button
+              variant="outline"
+              class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
+              @click="exportDataToDownload"
+            >
+              <Icon
+                icon="line-md:download-loop"
+                class="!size-6"
+              />
+            </Button>
+          </div>
         </div>
 
       </div>
@@ -55,7 +67,7 @@ import {
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogDescription
 } from '@/components/ui/alert-dialog'
-import { VisuallyHidden, ScrollArea, X, Input, computed } from '../lib/import'
+import { VisuallyHidden, ScrollArea, X, Icon, Input, computed } from '../lib/import'
 import { Button } from '@/components/ui/button'
 
 const gameMain = inject('gameMain')
@@ -104,9 +116,31 @@ const importDataToInit = () => {
     console.log('文本已成功导入');
     emits('importToInit', dataObject)
     closePanel();
-    inputData.value=''
+    inputData.value = ''
   } catch (err) {
     console.error('无法解析文本: ', err);
   }
+}
+const exportDataToDownload = () => {
+  // 将数据转换为JSON字符串
+  const utf8Bytes = new TextEncoder().encode(JSON.stringify(gameMain.value))
+  const dataStr = btoa(String.fromCharCode(...utf8Bytes))
+  // 创建一个Blob对象
+  const blob = new Blob([dataStr], { type: 'text/plain' });
+  // 创建一个URL对象
+  const url = window.URL.createObjectURL(blob);
+  // 创建一个<a>元素
+  const a = document.createElement('a');
+  a.href = url;
+  // 设置下载的文件名
+  a.download = 'game_data.txt';
+  // 将<a>元素添加到DOM中
+  document.body.appendChild(a);
+  // 触发点击事件
+  a.click();
+  // 移除<a>元素
+  document.body.removeChild(a);
+  // 释放URL对象
+  window.URL.revokeObjectURL(url);
 }
 </script>

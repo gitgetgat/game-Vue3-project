@@ -39,7 +39,7 @@ export { startCombat, recyClingAllCombatEquipments } from "../lib/combat";
 export { equipmentIcon, equipmentStatsTransform, sellAll, equipOrUnEquipment, sellEquipment, unequipAll } from "../lib/equipment";
 export { nFormatter, randomizeNum, saveData } from "../lib/utils";
 export { equipmentRarityList } from "../config/equipment"
-export { skillsDesc, prefixNames, names, skills } from "../config/player"
+export { skillsDesc, prefixNames, names, skills, percentages } from "../config/player"
 export { X } from 'lucide-vue-next';
 export { onMounted, ref, watchEffect, computed, nextTick, provide, useTemplateRef } from 'vue'
 export { useColorMode } from '@vueuse/core'

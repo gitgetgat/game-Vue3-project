@@ -26,7 +26,18 @@ export const playerExpGain = (gameMain, enemy) => {
   if (gameMain.auto.progress) {
     setTimeout(() => {
       while (player.leveled) {
-        handleSelectedLvlStat(gameMain, randomizeNum(0, 2));
+        if (player.selectedStats[0] && player.selectedStats[0].length > 0) {
+          console.log('player.selectedStats[0]', player.selectedStats[0]);
+          // 根据优先级选择升级属性
+          for (let i = 0; i < gameMain.auto.percentages.length; i++) {
+            const key = gameMain.auto.percentages[i].key;
+            const idx = player.selectedStats[0].findIndex(e => e === key)
+            if (idx >= 0) {
+              handleSelectedLvlStat(gameMain, idx);
+              break;
+            }
+          }
+        }
       }
     }, 1000);
   }

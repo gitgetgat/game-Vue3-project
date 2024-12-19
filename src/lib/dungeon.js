@@ -172,8 +172,7 @@ const dungeonEvent = (gameMain) => {
               specialBossBattle(gameMain);
             } else {
               setTimeout(() => {
-                map.status.event = false;
-                gameMain.map.status.eventType = ''
+                ignoreEvent(map)
               }, 3000);
             }
           } else {

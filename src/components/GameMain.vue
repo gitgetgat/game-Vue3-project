@@ -15,7 +15,7 @@ import {
   useColorMode, useToast,
   initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, offerBlessingEvent, offerCurseEvent, specialBossBattle, recyClingAllCombatEquipments, getMapEquipment, openInventory,
   // config
-  equipmentRarityList, skillsDesc, prefixNames, names, skills,
+  equipmentRarityList, skillsDesc, prefixNames, names, skills, percentages
 } from '../lib/import'
 import equipmentShow from './EquipmentShow.vue'
 import saleEquipment from './SaleEquipment.vue'
@@ -210,6 +210,7 @@ const generateGame = () => {
       chest: true, // 藏宝室宝箱自动拾取
       blessingY: true, // 祝福雕像自动购买
       blessingN: false, // 灾厄雕像自动购买
+      percentages: Object.values(percentages)
     },
   }
 }
