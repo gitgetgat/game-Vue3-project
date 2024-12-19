@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   # 构建工作
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,18 +43,10 @@ jobs:
         run: npm ci # 或 pnpm install / yarn install / bun install
       - name: Build with Game
         run: npm run build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy
+        uses: actions/deploy-pages@v4
         with:
-          path: dist
-
-  # 部署工作
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    name: Deploy
-    with:
-      # 项目配置的打包目录名称
-      folder: dist
-      # 提交分支名
-      branch: main
+          # 项目配置的打包目录名称
+          folder: dist
+          # 提交分支名
+          branch: main
