@@ -9,6 +9,8 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/game-Vue3-project/",
+  cleanUrls: true, //生成简洁的 URL
   css: {
     postcss: {
       plugins: [
