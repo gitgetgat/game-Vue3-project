@@ -44,7 +44,7 @@ jobs:
       - name: Build with Game
         run: npm run build # 或 pnpm docs:build / yarn docs:build / bun run docs:build
       - name: Deploy
-        uses: actions/deploy-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           # 项目配置的打包目录名称
           folder: dist
