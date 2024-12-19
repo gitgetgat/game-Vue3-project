@@ -2,8 +2,10 @@ import { generateRandomEnemy } from "./enemy.js";
 import { createEquipmentPrint } from "./equipment.js";
 import { nFormatter, randomizeNum, randomizeDecimal, saveData } from "./utils.js";
 import { playerLoadStats } from "./player.js"
-import { startCombat, addCombatLog } from "./combat.js"
+import { startCombat, addCombatLog, recyClingAllCombatEquipments } from "./combat.js"
 import { percentages } from "../config/player.js"
+import { useToast } from '@/components/ui/toast/use-toast'
+const { toast } = useToast()
 const generateBasicMap = () => {
   return {
     name: "Basic Map", // 地图名称
@@ -59,6 +61,7 @@ const dungeonEvent = (gameMain) => {
       eventTypes = ["nextroom"];
     }
     const event = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+    console.log('event', event);
 
     switch (event) {
       case "nextroom":// 房间
@@ -71,7 +74,7 @@ const dungeonEvent = (gameMain) => {
         if (gameMain.auto.progress) {
           setTimeout(() => {
             chooseNextroomEvent(gameMain)
-          }, 3000);
+          }, 1000);
         } else {
           gameMain.map.status.eventType = 'nextroom'
         }
@@ -103,14 +106,10 @@ const dungeonEvent = (gameMain) => {
         map.enemyBattleList.push(enemy);
         addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
         if (gameMain.auto.progress) {
-          if (gameMain.auto.chest) {
-            chestEvent(gameMain);
-          } else {
-            setTimeout(() => {
-              map.status.event = false;
-              gameMain.map.status.eventType = ''
-            }, 3000);
-          }
+          setTimeout(() => {
+            gameMain.combat.enemyCurrId = 0
+            engageBattle(gameMain)
+          }, 1000);
         } else {
           gameMain.map.status.eventType = 'enemy'
         }
@@ -123,13 +122,12 @@ const dungeonEvent = (gameMain) => {
           let cost = getBlessingCost(player);
           addDungeonLog(map, `<span style="color:#fde047">您发现了一座祝福神龛。您是否想奉献</span> <svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg>${nFormatter(cost)} <span style="color:#fde047">以获得祝福？(祝福 Lv.${player.blessing})</span>`);
           if (gameMain.auto.progress) {
-            if (gameMain.auto.chest) {
+            if (gameMain.auto.blessingY) {
               offerBlessingEvent(gameMain);
             } else {
               setTimeout(() => {
-                map.status.event = false;
-                gameMain.map.status.eventType = ''
-              }, 3000);
+                ignoreEvent(map)
+              }, 1000);
             }
           } else {
             gameMain.map.status.eventType = 'blessing'
@@ -148,13 +146,12 @@ const dungeonEvent = (gameMain) => {
           let cost = curseLvl * (10000 * (curseLvl * 0.5)) + 5000;
           addDungeonLog(map, `<span style="color:#e30b5c">您发现了一座诅咒神龛。您是否想奉献</span> <svg style="color:#fde047" class="inline-block mx-2" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m1 22l1.5-5h7l1.5 5zm12 0l1.5-5h7l1.5 5zm-7-7l1.5-5h7l1.5 5zm17-8.95l-3.86 1.09L18.05 11l-1.09-3.86l-3.86-1.09l3.86-1.09l1.09-3.86l1.09 3.86z" /></svg>${nFormatter(cost)} <span style="color:#e30b5c">以获得诅咒？这将增强怪物的力量，同时也会提高战利品的质量。(诅咒 Lv.${curseLvl})</span>`);
           if (gameMain.auto.progress) {
-            if (gameMain.auto.chest) {
+            if (gameMain.auto.blessingN) {
               offerCurseEvent(gameMain);
             } else {
               setTimeout(() => {
-                map.status.event = false;
-                gameMain.map.status.eventType = ''
-              }, 3000);
+                ignoreEvent(map)
+              }, 1000);
             }
           } else {
             gameMain.map.status.eventType = 'curse'
@@ -171,7 +168,7 @@ const dungeonEvent = (gameMain) => {
           map.status.event = true;
           addDungeonLog(map, `<span style="color:#e30b5c">你发现了一个神秘的房间。好像有什么东西在里面睡觉。</span>`);
           if (gameMain.auto.progress) {
-            if (gameMain.auto.chest) {
+            if (gameMain.auto.specialBossCombat) {
               specialBossBattle(gameMain);
             } else {
               setTimeout(() => {
@@ -297,22 +294,20 @@ export const progressReset = (gameMain) => {
 }
 
 // 启动和暂停地图状态
-const dungeonToggleStartPause = (map) => {
-  dungeonStartPause(map)
+const dungeonToggleStartPause = (gameMain) => {
+  if (gameMain.playerDead) return
+  dungeonStartPause(gameMain)
 }
 
 // 启动和暂停地图状态
-const dungeonStartPause = (map) => {
+const dungeonStartPause = (gameMain) => {
+  const { map } = gameMain;
   if (!map.status.paused) {
-    // sfxPause.play();
-
     map.dungeonAction = "休息中";
     map.dungeonActivity = "探索";
     map.status.exploring = false;
     map.status.paused = true;
   } else {
-    // sfxUnpause.play();
-
     map.dungeonAction = "探索中";
     map.dungeonActivity = "休息";
     map.status.exploring = true;
@@ -386,14 +381,12 @@ const chooseNextroomEvent = (gameMain) => {
       incrementRoom(map);
       map.status.eventType = 'treasure'
       addDungeonLog(map, `你移至下一个房间并发现了一个宝藏室。里面有一个宝箱。`);
+      if (gameMain.auto.progress) {
+        setTimeout(() => {
+          chestEvent(gameMain)
+        }, 1000);
+      }
 
-      // document.querySelector("#choice1").onclick = function () {
-      //   chestEvent();
-      // }
-      // document.querySelector("#choice2").onclick = function () {
-      //   dungeon.action = 0;
-      //   ignoreEvent();
-      // };
     } else {
       map.status.event = false;
       map.status.eventType = ''
@@ -413,6 +406,12 @@ const mimicBattle = (type, gameMain) => {
   gameMain.map.status.event = true;
   gameMain.map.status.eventType = "enemy"
   addDungeonLog(map, `你遭遇了 ${enemy.name}。`);
+  if (gameMain.auto.progress) {
+    setTimeout(() => {
+      gameMain.combat.enemyCurrId = 0
+      engageBattle(gameMain)
+    }, 1000);
+  }
   // startCombat(gameMain);
   // addCombatLog(gameMain, `你遭遇了 ${enemy.name}.`);
 }
@@ -430,7 +429,12 @@ const guardianBattle = (gameMain) => {
   // showCombatInfo();
   // startCombat(gameMain, () => { addDungeonLog(map, "你进入了下一层。"); });
   addCombatLog(gameMain, `地牢守护者 ${enemy.name} 挡住了你的去路。`);
-
+  if (gameMain.auto.progress) {
+    setTimeout(() => {
+      gameMain.combat.enemyCurrId = 0
+      engageBattle(gameMain)
+    }, 1000);
+  }
 }
 
 
@@ -445,6 +449,12 @@ const specialBossBattle = (gameMain) => {
   addDungeonLog(map, `<span style="color:#e30b5c">地牢守护者 ${enemy.name} 醒来了。</span>`);
   // startCombat(gameMain);
   addCombatLog(gameMain, `<span style="color:#e30b5c">地牢守护者 ${enemy.name} 醒来了。</span>`);
+  if (gameMain.auto.progress) {
+    setTimeout(() => {
+      gameMain.combat.enemyCurrId = 0
+      engageBattle(gameMain)
+    }, 1000);
+  }
 }
 
 // 开始战斗
@@ -511,6 +521,11 @@ const chestEvent = (gameMain) => {
       createEquipmentPrint("dungeon", gameMain);
       gameMain.map.status.event = true;
       gameMain.map.status.eventType = 'equipment'
+      if (gameMain.auto.progress) {
+        setTimeout(() => {
+          getMapEquipment(gameMain, toast)
+        }, 1000);
+      }
     }
   } else if (eventRoll == 3) {
     goldDrop(gameMain);
@@ -523,6 +538,22 @@ const chestEvent = (gameMain) => {
   }
 }
 
+// 获取探索地图时得到的装备
+const getMapEquipment = (gameMain, toastCallback) => {
+  const filterList = gameMain.map.backlog.filter(e => typeof e === 'object' && e.type === 'equipment')
+  if (!filterList.length) {
+    toastCallback && toastCallback({
+      title: '未获取到装备数据！',
+      variant: 'warning',
+    });
+    handleIgnoreEvent()
+  } else {
+    const equipment = filterList[filterList.length - 1].raw
+    gameMain.player.inventory.equipment.push(JSON.stringify(equipment))
+    gameMain.map.status.eventType = ''
+    gameMain.map.status.event = false;
+  }
+}
 
 // Calculates Gold Drop
 const goldDrop = (gameMain) => {
@@ -754,4 +785,7 @@ export {
   offerCurseEvent,
   specialBossBattle,
   exportData,
+  getMapEquipment,
+  openInventory,
+  closeInventory,
 }

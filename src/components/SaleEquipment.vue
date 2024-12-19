@@ -60,6 +60,7 @@ const props = defineProps({
   getRarityColor: { type: Function, required: true },
 });
 const emits = defineEmits([
+  'update:saleEquipmentOpen',
   'equipmentSale',
   'closeSaleEquipment',
 ]);
@@ -69,6 +70,7 @@ const closeSaleEquipment = () => {
 };
 const handleSaleEquipment = (equipment) => {
   emits('equipmentSale', equipment.id || equipment.raw.id);
+  emits('update:saleEquipmentOpen', false);
 }
 
 </script>

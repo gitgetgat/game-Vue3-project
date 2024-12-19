@@ -1,6 +1,7 @@
 import { percentages } from '../config/player.js'
+import { addDungeonLog } from './dungeon.js';
 import { applyEquipmentStats } from './equipment.js'
-import { saveData } from "./utils.js";
+import { saveData, randomizeNum } from "./utils.js";
 
 // 升级时可选择的升级属性选项组
 // let selectedStats = [];
@@ -21,6 +22,14 @@ export const playerExpGain = (gameMain, enemy) => {
   }
 
   playerLoadStats(gameMain);
+  // 自动升级随机属性
+  if (gameMain.auto.progress) {
+    setTimeout(() => {
+      while (player.leveled) {
+        handleSelectedLvlStat(gameMain, randomizeNum(0, 2));
+      }
+    }, 1000);
+  }
 }
 
 // 提升玩家等级
@@ -82,41 +91,7 @@ export const playerLoadStats = (gameMain) => {
 
   // Generate battle info for player if in combat
   if (player.inCombat || playerDead) {
-    // const playerCombatHpElement = document.querySelector('#player-hp-battle');
-    // const playerHpDamageElement = document.querySelector('#player-hp-dmg');
-    // const playerExpElement = document.querySelector('#player-exp-bar');
-    // const playerInfoElement = document.querySelector('#player-combat-info');
-    // playerCombatHpElement.innerHTML = `&nbsp${nFormatter(player.stats.hp)}/${nFormatter(player.stats.hpMax)}(${player.stats.hpPercent}%)`;
-    // playerCombatHpElement.style.width = `${player.stats.hpPercent}%`;
-    // playerHpDamageElement.style.width = `${player.stats.hpPercent}%`;
-    // playerExpElement.style.width = `${player.exp.expPercent}%`;
-    // playerInfoElement.innerHTML = `${player.name} Lv.${player.lvl} (${player.exp.expPercent}%)`;
   }
-
-  // // Header
-  // document.querySelector("#player-name").innerHTML = `<i class="fas fa-user"></i>${player.name} Lv.${player.lvl}`;
-  // document.querySelector("#player-exp").innerHTML = `<p>Exp</p> ${nFormatter(player.exp.expCurr)}/${nFormatter(player.exp.expMax)} (${player.exp.expPercent}%)`;
-  // document.querySelector("#player-gold").innerHTML = `<i class="fas fa-coins" style="color: #FFD700;"></i>${nFormatter(player.gold)}`;
-
-  // // Player Stats
-  // playerHpElement.innerHTML = `${nFormatter(player.stats.hp)}/${nFormatter(player.stats.hpMax)} (${player.stats.hpPercent}%)`;
-  // playerAtkElement.innerHTML = nFormatter(player.stats.atk);
-  // playerDefElement.innerHTML = nFormatter(player.stats.def);
-  // playerAtkSpdElement.innerHTML = player.stats.atkSpd.toFixed(2).replace(rx, "$1");
-  // playerVampElement.innerHTML = (player.stats.vamp).toFixed(2).replace(rx, "$1") + "%";
-  // playerCrateElement.innerHTML = (player.stats.critRate).toFixed(2).replace(rx, "$1") + "%";
-  // playerCdmgElement.innerHTML = (player.stats.critDmg).toFixed(2).replace(rx, "$1") + "%";
-
-  // // Player Bonus Stats
-  // document.querySelector("#bonus-stats").innerHTML = `
-  //   <h4>Bonus Stats</h4>
-  //   <p><i class="fas fa-heart"></i>HP+${player.bonusStats.hp.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-sword"></i>ATK+${player.bonusStats.atk.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-round-shield"></i>DEF+${player.bonusStats.def.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-plain-dagger"></i>ATK.SPD+${player.bonusStats.atkSpd.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-dripping-blade"></i>VAMP+${player.bonusStats.vamp.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-lightning-bolt"></i>C.RATE+${player.bonusStats.critRate.toFixed(2).replace(rx, "$1")}%</p>
-  //   <p><i class="ra ra-focused-lightning"></i>C.DMG+${player.bonusStats.critDmg.toFixed(2).replace(rx, "$1")}%</p>`;
 }
 
 
@@ -162,7 +137,12 @@ export const generateLvlStats = () => {
 
 // 选择某一项升级
 export const handleSelectedLvlStat = (gameMain, i) => {
-  const { player } = gameMain;
+  console.log('handleSelectedLvlStat', i);
+  const { player, map } = gameMain;
+  if (!player.selectedStats.length) return
+  if (gameMain.auto.progress) {
+    addDungeonLog(map, `随机选择了升级 ${percentages[player.selectedStats[0][i]].label} ${percentages[player.selectedStats[0][i]].value}%`)
+  }
   player.bonusStats[player.selectedStats[0][i]] += percentages[player.selectedStats[0][i]].value;
 
   if (player.exp.lvlGained > 1) {

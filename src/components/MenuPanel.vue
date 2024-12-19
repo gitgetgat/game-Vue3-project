@@ -101,24 +101,10 @@
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div class="flex items-center space-x-2 justify-between mb-2">
-                <Label>普通怪</Label>
-                <Switch
-                  v-model:checked.sync="gameMain.auto.enemyCombat"
-                  class="h-4 w-8"
-                />
-              </div>
-              <div class="flex items-center space-x-2 justify-between mb-2">
-                <Label>守层 BOSS</Label>
-                <Switch
-                  v-model:checked.sync="gameMain.auto.floorEnemyCombat"
-                  class="h-4 w-8"
-                />
-              </div>
               <div class="flex items-center space-x-2 justify-between">
                 <Label>精英 BOSS</Label>
                 <Switch
-                  v-model:checked.sync="gameMain.auto.bossCombat"
+                  v-model:checked.sync="gameMain.auto.specialBossCombat"
                   class="h-4 w-8"
                 />
               </div>
@@ -147,14 +133,6 @@
                 />
               </div>
               <div class="flex items-center space-x-2 justify-between mb-2">
-                <Label>战斗宝箱</Label>
-                <Switch
-                  v-model:checked.sync="gameMain.auto.combatChest"
-                  id="airplane-mode"
-                  class="h-4 w-8"
-                />
-              </div>
-              <div class="flex items-center space-x-2 justify-between mb-2">
                 <Label>祝福雕像</Label>
                 <Switch
                   v-model:checked.sync="gameMain.auto.blessingY"
@@ -170,16 +148,9 @@
                   class="h-4 w-8"
                 />
               </div>
-              <div class="flex items-center space-x-2 justify-between">
-                <Label>升级 Buff</Label>
-                <Switch
-                  id="airplane-mode"
-                  class="h-4 w-8"
-                />
-              </div>
             </AccordionContent>
           </AccordionItem>
-          <AccordionItem
+          <!-- <AccordionItem
             class="border-none"
             key="buffLevel"
             value="buffLevel"
@@ -218,7 +189,7 @@
                 </NumberFieldContent>
               </NumberField>
             </AccordionContent>
-          </AccordionItem>
+          </AccordionItem> -->
         </Accordion>
       </div>
     </DialogContent>
@@ -256,7 +227,7 @@ import { Button } from '@/components/ui/button'
 import { nFormatter } from "../lib/utils";
 import {
   // components
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, VisuallyHidden, DialogDescription, X, Icon, Label, Switch, Accordion, AccordionContent, AccordionItem, AccordionTrigger, NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, VisuallyHidden, DialogDescription, X, Icon, Label, Switch, Accordion, AccordionContent, AccordionItem, AccordionTrigger, NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput, closeInventory,
 } from '../lib/import'
 import { ref, computed, inject } from 'vue'
 const gameMain = inject('gameMain')
@@ -278,6 +249,7 @@ const emits = defineEmits([
 
 const closeMenuCfgOpen = () => {
   emits('update:menuCfgOpen', false);
+  closeInventory(gameMain.value)
 };
 
 const openImportDataPanel = () => {

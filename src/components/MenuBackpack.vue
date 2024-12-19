@@ -229,7 +229,7 @@ import {
 import {
   Icon, ScrollArea, X, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, HoverCard, HoverCardContent, HoverCardTrigger, VisuallyHidden, equipmentRarityList, sellAll, unequipAll, equipmentIcon, equipmentStatsTransform
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, HoverCard, HoverCardContent, HoverCardTrigger, VisuallyHidden, equipmentRarityList, sellAll, unequipAll, equipmentIcon, equipmentStatsTransform, closeInventory
 } from '../lib/import'
 import { Button } from '@/components/ui/button'
 import { ref, computed, inject } from 'vue'
@@ -273,6 +273,7 @@ const backEquipmentList = computed(() => {
 // 出售所有装备
 const handleSaleAllEquipment = () => {
   sellAll(gameMain.value, equipmentSelectVal.value)
+  saleCategoryEquipmentOpen.value = false
 }
 const getIcon = (val) => {
   return equipmentIcon(val)
@@ -298,6 +299,7 @@ const equipOrUnequipEquipment = (type, id) => {
 };
 const closeMenuBackpack = () => {
   emits('update:menuBackpackOpen', false);
+  closeInventory(gameMain.value)
 };
 </script>
 

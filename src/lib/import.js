@@ -33,9 +33,9 @@ export {
 } from '@/components/ui/number-field'
 export { VisuallyHidden } from 'radix-vue'
 export { Toaster } from '@/components/ui/toast'
-export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon, progressReset, offerBlessingEvent, offerCurseEvent, specialBossBattle, } from "../lib/dungeon"
+export { initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, enterDungeon, progressReset, offerBlessingEvent, offerCurseEvent, specialBossBattle, getMapEquipment, openInventory, closeInventory, } from "../lib/dungeon"
 export { playerLoadStats, objectValidation, calculateStats, generateLvlStats, handleSelectedLvlStat } from "../lib/player";
-export { startCombat } from "../lib/combat";
+export { startCombat, recyClingAllCombatEquipments } from "../lib/combat";
 export { equipmentIcon, equipmentStatsTransform, sellAll, equipOrUnEquipment, sellEquipment, unequipAll } from "../lib/equipment";
 export { nFormatter, randomizeNum, saveData } from "../lib/utils";
 export { equipmentRarityList } from "../config/equipment"

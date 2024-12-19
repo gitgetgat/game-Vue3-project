@@ -13,7 +13,7 @@ import {
   Toaster, X,
   // functions
   useColorMode, useToast,
-  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, offerBlessingEvent, offerCurseEvent, specialBossBattle,
+  initialDungeonLoad, dungeonToggleStartPause, chestEvent, fleeBattle, engageBattle, endBattle, ignoreEvent, chooseNextroomEvent, playerLoadStats, equipmentIcon, equipmentStatsTransform, sellAll, nFormatter, randomizeNum, objectValidation, enterDungeon, calculateStats, startCombat, saveData, progressReset, equipOrUnEquipment, sellEquipment, offerBlessingEvent, offerCurseEvent, specialBossBattle, recyClingAllCombatEquipments, getMapEquipment, openInventory,
   // config
   equipmentRarityList, skillsDesc, prefixNames, names, skills,
 } from '../lib/import'
@@ -22,6 +22,7 @@ import saleEquipment from './SaleEquipment.vue'
 import failedGameAlertDialog from './FailedGameAlertDialog.vue'
 import AttributePanel from './AttributePanel.vue'
 import CombatPanel from './CombatPanel.vue'
+import CombatPanelAuto from './CombatPanelAuto.vue'
 import LevelUpPanel from './LevelUpPanel.vue'
 import MenuBackpack from './MenuBackpack.vue'
 import GameCover from './GameCover.vue'
@@ -50,7 +51,7 @@ const isHovered = ref(false)
 watchEffect(() => {
   mode.value = toggleState.value ? 'light' : 'dark'
 })
-const skillSelectVal = ref('Remnant Razor') // 背包-装备类型下拉筛选
+const skillSelectVal = ref("Titan's Will") // 背包-装备类型下拉筛选
 const GameBeginSetConfigOpen = ref(false) // 初始配置菜单是否打开
 const menuBackpackOpen = ref(false) // 背包是否打开
 const dataImportExportOpen = ref(false) // 导入导出是否打开
@@ -204,20 +205,17 @@ const generateGame = () => {
       combatLoot: [],
     },
     auto: {
-      progress: false, // 自动进程
-      enemyCombat: false, // 普通怪自动战斗
-      floorEnemyCombat: false, // 守层boos自动战斗
-      bossCombat: false, // 精英boss自动战斗
-      chest: false, // 藏宝室宝箱自动拾取
-      combatChest: false, // 战斗宝箱自动拾取
-      blessingY: false, // 祝福雕像自动购买
+      progress: true, // 自动进程
+      specialBossCombat: false, // 精英boss自动战斗
+      chest: true, // 藏宝室宝箱自动拾取
+      blessingY: true, // 祝福雕像自动购买
       blessingN: false, // 灾厄雕像自动购买
     },
   }
 }
 // 开始/暂停 地图探索
 const handleDungeonToggleStartPause = () => {
-  dungeonToggleStartPause(gameMain.value.map)
+  dungeonToggleStartPause(gameMain.value)
 }
 
 // 确认放弃按钮
@@ -225,9 +223,8 @@ const handleFailedGame = (isReopen) => {
   clearInterval(gameMain.value.map.dungeonTimer);
   clearInterval(gameMain.value.player.playTimer);
 
-  gameMain.value.player.gold = 0;
   progressReset(gameMain.value);
-  skillSelectVal.value = 'Remnant Razor'
+  skillSelectVal.value = "Titan's Will"
   handleResetAttrPoints()
 
   menuQuitOpen.value = false
@@ -236,6 +233,7 @@ const handleFailedGame = (isReopen) => {
   gameMainLoading.value = false
   gameWindowLoading.value = false
   if (isReopen) {
+    gameMain.value.player.gold = 0;
     gameMain.value.player.inventory.equipment.length = 0;
     gameMain.value.player.equipped.length = 0;
     localStorage.removeItem("gameMain");
@@ -272,12 +270,7 @@ const handleFleeBattle = () => {
 }
 // 结束战斗
 const handleEndBattle = () => {
-  // 将装备收到未满的背包
-  gameMain.value.combat.combatLoot.forEach(item => {
-    if (gameMain.value.player.inventory.equipment.length < gameMain.value.player.inventory.equipmentLimit) {
-      gameMain.value.player.inventory.equipment.push(JSON.stringify(item.raw))
-    }
-  });
+  recyClingAllCombatEquipments(gameMain.value)
   handleIgnoreEndBattle()
 }
 // 结束战斗
@@ -384,19 +377,7 @@ const handleEquipmentShow = (item, isHover = false, isTrans = false) => {
 // 获取地图日志中的装备
 const handleGetAward = () => {
   if (gameMain.value.map.status.eventType === 'equipment') {
-    const filterList = gameMain.value.map.backlog.filter(e => typeof e === 'object' && e.type === 'equipment')
-    if (!filterList.length) {
-      toast({
-        title: '未获取到装备数据！',
-        variant: 'warning',
-      });
-      handleIgnoreEvent()
-    } else {
-      const equipment = filterList[filterList.length - 1].raw
-      gameMain.value.player.inventory.equipment.push(JSON.stringify(equipment))
-      gameMain.value.map.status.eventType = ''
-      gameMain.value.map.status.event = false;
-    }
+    getMapEquipment(gameMain.value, toast)
   } else if (gameMain.value.map.status.eventType === 'blessing') {
     offerBlessingEvent(gameMain.value)
   } else if (gameMain.value.map.status.eventType === 'curse') {
@@ -414,7 +395,7 @@ const handleClearMapLog = () => {
 // 关闭属性分配面板
 const handleCloseAllocation = () => {
   GameBeginSetConfigOpen.value = false
-  skillSelectVal.value = 'Remnant Razor'
+  skillSelectVal.value = "Titan's Will"
   handleResetAttrPoints()
 }
 
@@ -490,6 +471,10 @@ const validateName = () => {
   return true
 }
 
+const handleMenuBackpackOpen = () => {
+  menuBackpackOpen.value = true
+  openInventory(gameMain.value)
+}
 // 显示小数
 const dealFloatFixed = (val, fixed = 2) => {
   return parseFloat(val.toFixed(fixed))
@@ -790,7 +775,7 @@ onMounted(() => {
               <Icon
                 icon="jam:backpack-f"
                 class="!size-6 border-none"
-                @click="menuBackpackOpen=true"
+                @click="handleMenuBackpackOpen"
               />
             </TooltipTrigger>
             <TooltipContent>
@@ -806,7 +791,7 @@ onMounted(() => {
               <Icon
                 icon="fluent:list-rtl-16-filled"
                 class="!size-6 border-none"
-                @click="menuCfgOpen = true"
+                @click="() => { menuCfgOpen = true; openInventory(gameMain)}"
               />
             </TooltipTrigger>
             <TooltipContent>
@@ -972,6 +957,14 @@ onMounted(() => {
         >
           忽略
         </Button>
+        <Button
+          v-if="gameMain.playerDead"
+          variant="outline"
+          class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base border-white"
+          @click="handleFailedGame(false)"
+        >
+          重开
+        </Button>
       </div>
     </ScrollArea>
   </div>
@@ -990,7 +983,7 @@ onMounted(() => {
   <!-- 显示装备详情 end -->
   <!-- 出售装备 begin -->
   <saleEquipment
-    :saleEquipmentOpen="saleEquipmentOpen"
+    v-model:saleEquipmentOpen="saleEquipmentOpen"
     :equipment="currShowEquipment"
     :getRarityLabel="getRarityLabel"
     :getRarityColor="getRarityColor"
@@ -1006,7 +999,7 @@ onMounted(() => {
   <!-- 放弃本局游戏 end -->
   <!-- 战斗面板 begin -->
   <CombatPanel
-    v-if="currEnemy || (gameMain && gameMain.player.inCombat)"
+    v-if="(currEnemy || (gameMain && gameMain.player.inCombat)) && !gameMain.auto.progress"
     :combatOpen="combatOpen"
     :currEnemy="currEnemy"
     :equipment="currShowEquipment"
@@ -1017,10 +1010,19 @@ onMounted(() => {
     @ignoreEndBattle="handleIgnoreEndBattle"
     @failedGame="handleFailedGame"
   />
+  <CombatPanelAuto
+    v-if="(currEnemy || (gameMain && gameMain.player.inCombat)) && (gameMain.auto.progress && !gameMain.playerDead)"
+    :combatOpen="true"
+    :currEnemy="currEnemy"
+    :equipment="currShowEquipment"
+    :getRarityLabel="getRarityLabel"
+    :getRarityColor="getRarityColor"
+    :dealFloatFixed="dealFloatFixed"
+  />
   <!-- 战斗面板 end -->
   <!-- 升级面板 begin -->
   <LevelUpPanel
-    v-if="levelUpOpen"
+    v-if="levelUpOpen && !gameMain.auto.progress"
     :levelUpOpen="levelUpOpen"
   />
   <!-- 升级面板 end -->
