@@ -562,15 +562,17 @@ const importToInit = (value) => {
     gameWindowLoading.value = true
   }, randomizeNum(1000, 3000));
 }
-
+const isMobile = ref(false)
 // 计算属性，判断是否为移动端
-const isMobile = computed(() => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-});
+const checkWindowSize = () => {
+  const mediaQuery = window.matchMedia('(max-width: 640px)');
+  isMobile.value = mediaQuery.matches || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+};
 
 onMounted(() => {
   mode.value = 'dark'
   initGame()
+  window.addEventListener('resize', checkWindowSize)
 })
 
 </script>

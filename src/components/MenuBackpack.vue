@@ -101,7 +101,7 @@
               <div
                 class="text-center py-2 border rounded-lg cursor-pointer"
                 :style="`color:${getRarityColor(equipment.rarity)};border-color:${getRarityColor(equipment.rarity)}`"
-                @click="handleEquipmentShow(equipment,true,true)"
+                @click="handleEquipmentShow(equipment,!isMobile,true)"
               >
                 <span v-html="getIcon(equipment.category.value)"></span>
               </div>
