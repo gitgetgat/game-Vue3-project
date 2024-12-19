@@ -23,9 +23,9 @@
           <span class="absolute text-xs z-1 left-1">{{currEnemy.stats.hp}}/{{ currEnemy.stats.hpMax }}（{{ currEnemy.stats.hpPercent }}%）</span>
         </div>
         <img
-          :src="`../../public/${currEnemy.image.name}${currEnemy.image.type}`"
+          :src="getImageUrl(`${currEnemy.image.name}${currEnemy.image.type}`)"
           alt="Photo by Drew Beamer"
-          class="rounded-md object-cover mx-auto h-40 w-40 mb-4 block"
+          class="rounded-md object-cover mx-auto h-40 mb-4 block"
         >
         <div class="border rounded-md p-2 mb-2">
           <p class="mb-1">{{ gameMain.player.name }} 等级 {{ gameMain.player.lvl }}（{{gameMain.player.exp.expPercent}}%）</p>
@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { inject, ref } from 'vue'
+import { inject, ref, computed } from 'vue'
 import {
   AlertDialogOverlay,
 } from 'radix-vue';
@@ -71,4 +71,9 @@ const props = defineProps({
   dealFloatFixed: { type: Function, required: true },
 });
 
+const getImageUrl = (path) => {
+  const url = `/public/${path}`
+  const baseUrl = new URL(import.meta.env.BASE_URL, import.meta.url).href
+  return baseUrl + url
+}
 </script>

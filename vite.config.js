@@ -6,6 +6,7 @@ import postcssNesting from 'postcss-nesting';
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import copyPublicPlugin from './vite-plugin-copy-public'; // 引入自定义插件
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -22,6 +23,7 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    copyPublicPlugin(), // 注册自定义插件
   ],
   resolve: {
     alias: {

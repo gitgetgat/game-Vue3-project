@@ -401,7 +401,7 @@ const handleCloseAllocation = () => {
 
 // 重置属性分配
 const handleResetAttrPoints = () => {
-  allocation.value.name = ''
+  // allocation.value.name = ''
   allocation.value.hp = 16
   allocation.value.atk = 7
   allocation.value.def = 7
