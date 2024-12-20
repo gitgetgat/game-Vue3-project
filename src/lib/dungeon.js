@@ -309,11 +309,18 @@ const dungeonStartPause = (gameMain) => {
     map.dungeonActivity = "探索";
     map.status.exploring = false;
     map.status.paused = true;
+    map.status.event = false
+    map.status.eventType = ''
   } else {
     map.dungeonAction = "探索中";
     map.dungeonActivity = "休息";
     map.status.exploring = true;
     map.status.paused = false;
+    if (!map.status.eventType) {
+      map.status.event = false
+    } else {
+      map.status.event = true
+    }
   }
 }
 
