@@ -66,6 +66,9 @@ const dungeonEvent = (gameMain) => {
     switch (event) {
       case "nextroom":// 房间
         map.status.event = true;
+        if (gameMain.auto.progress && map.progress.floor >= gameMain.auto.floorLimit && map.progress.room == map.progress.roomLimit) {
+          map.progress.room = 1
+        }
         if (map.progress.room == map.progress.roomLimit) {
           addDungeonLog(map, '找到了 BOOS 房间的门');
         } else {

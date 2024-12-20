@@ -28,7 +28,7 @@ import MenuBackpack from './MenuBackpack.vue'
 import GameCover from './GameCover.vue'
 import MenuPanel from './MenuPanel.vue'
 import DataImportExport from './DataImportExport.vue'
-import dayjs from 'dayjs'
+import OtherAttrPanel from './OtherAttrPanel.vue'
 
 let gameMain = ref(null)
 provide('gameMain', gameMain)
@@ -73,8 +73,6 @@ const resetOpenCfg = () => {
   menuCfgOpen.value = false
   combatOpen.value = false
 }
-// 地图计时器
-const dungeonTime = computed(() => dayjs(gameMain.value.dungeonTime + (new Date().getTimezoneOffset()) * 60 * 1000).format('HH:mm:ss'))
 
 // 当前敌人
 const currEnemy = computed(() => gameMain.value && gameMain.value.map && gameMain.value.map.enemyBattleList.length && gameMain.value.combat.enemyCurrId >= 0 ? gameMain.value.map.enemyBattleList[gameMain.value.combat.enemyCurrId] : null)
@@ -210,7 +208,8 @@ const generateGame = () => {
       chest: true, // 藏宝室宝箱自动拾取
       blessingY: true, // 祝福雕像自动购买
       blessingN: false, // 灾厄雕像自动购买
-      percentages: Object.values(percentages)
+      percentages: Object.values(percentages),
+      floorLimit: 5,
     },
   }
 }
@@ -487,6 +486,8 @@ const initGame = () => {
   if (localStorage.getItem("gameMain") && localStorage.getItem("gameMain") !== 'undefined') {
     gameMain.value = JSON.parse(localStorage.getItem("gameMain"))
     // console.log(localStorage.getItem("gameMain"));
+    if (!gameMain.value.auto.percentages) gameMain.value.auto.percentages = Object.values(percentages)
+    if (!gameMain.value.auto.floorLimit) gameMain.value.auto.floorLimit = 5
     if (gameMain.value.player.allocated) {
       GameBeginSetConfigOpen.value = false
       coverLoading.value = false
@@ -761,7 +762,7 @@ onMounted(() => {
         </p>
         <p class="grow flex mobile:flex-row mobile:items-center  sm:flex-col sm:items-start">
           <span class="py-0.5 mobile:mr-1.5">经验值</span>
-          <span class="pb-0.5">{{gameMain.player.exp.expCurr}}/{{gameMain.player.exp.expMax}}（{{gameMain.player.exp.expPercent}}%）</span>
+          <span class="pb-0.5">{{nFormatter(gameMain.player.exp.expCurr)}}/{{nFormatter(gameMain.player.exp.expMax)}}（{{gameMain.player.exp.expPercent}}%）</span>
         </p>
       </div>
       <p class="grow flex text-center">
@@ -825,31 +826,7 @@ onMounted(() => {
       </p>
     </div>
     <AttributePanel :dealFloatFixed="dealFloatFixed"></AttributePanel>
-    <div class="flex justify-between mb-3 h-fit w-full">
-      <div class="py-2">{{dungeonTime}}</div>
-      <div class="py-2">层数 {{ gameMain.map.progress.floor }}</div>
-      <div class="py-2">房间 {{ gameMain.map.progress.room }}</div>
-      <div>
-        <Button
-          variant="secondary"
-          class="hover:bg-[hsl(var(--foreground))] hover:text-[hsl(var(--background))] hover:transition-all text-base"
-          @click="handleDungeonToggleStartPause"
-        >
-          {{ gameMain.map.dungeonAction }}
-          <Icon
-            v-if="gameMain.map.status.exploring"
-            icon="eos-icons:three-dots-loading"
-            class="!size-6 border-none inline-block"
-          />
-          <Icon
-            v-if="gameMain.map.status.paused"
-            icon="ri:rest-time-line"
-            class="!size-6 border-none inline-block"
-          />
-        </Button>
-      </div>
-    </div>
-    <!-- <div class="flex-1 border mb-2 rounded-lg"></div> -->
+    <OtherAttrPanel @DungeonToggleStartPause="handleDungeonToggleStartPause"></OtherAttrPanel>
     <ScrollArea
       id="mapLog"
       @mouseover="isHovered = true"

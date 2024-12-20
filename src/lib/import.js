@@ -13,7 +13,7 @@ export {
 export {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogFooter, AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-
+export { Popover, PopoverContent, PopoverTrigger, } from '@/components/ui/popover'
 export {
   AlertDialogOverlay,
 } from 'radix-vue';
