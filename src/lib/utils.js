@@ -1,5 +1,6 @@
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import dayjs from "dayjs";
 
 export function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -45,4 +46,5 @@ export const nFormatter = (num) => {
 export const saveData = (gameMain) => {
   const gameMainData = JSON.stringify(gameMain);
   localStorage.setItem("gameMain", gameMainData);
+  localStorage.setItem("lastUpdateTime", dayjs().format("YYYY-MM-DD HH:mm:ss"));
 }

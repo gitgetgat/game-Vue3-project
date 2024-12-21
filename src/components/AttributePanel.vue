@@ -59,7 +59,7 @@
           icon="typcn:heart-full-outline"
           class="sm:!size-6 mr-1 mobile:!size-5"
         />
-        <span class="mobile:text-sm sm:text-base">生命值+{{dealFloatFixed(gameMain.player.bonusStats.atk)}}%</span>
+        <span class="mobile:text-sm sm:text-base">生命值+{{dealFloatFixed(gameMain.player.bonusStats.hp)}}%</span>
       </div>
       <div class="flex my-1">
         <Icon

@@ -14,7 +14,7 @@
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          class="w-80"
+          class="w-80 z-[200]"
           @openAutoFocus.prevent
           @closeAutoFocus.prevent
         >

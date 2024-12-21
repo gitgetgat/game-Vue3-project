@@ -77,7 +77,7 @@
             />自动进程
           </Label>
           <Switch
-            v-model:checked.sync="gameMain.auto.progress"
+            v-model:checked="gameMain.auto.progress"
             class="h-4 w-8"
           />
         </div>

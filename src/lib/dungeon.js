@@ -363,6 +363,7 @@ const blessingValidation = (player) => {
 // 添加打印日志到记录
 const addDungeonLog = (map, message) => {
   console.log('backlog new message:', message);
+  if (map.backlog.length >= 100) map.backlog.slice(-1)
   map.backlog.push(message);
   // updateDungeonLog(choices);
 }

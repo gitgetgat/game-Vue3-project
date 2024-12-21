@@ -17,6 +17,7 @@ import {
   // config
   equipmentRarityList, skillsDesc, prefixNames, names, skills, percentages
 } from '../lib/import'
+import dayjs from "dayjs";
 import equipmentShow from './EquipmentShow.vue'
 import saleEquipment from './SaleEquipment.vue'
 import failedGameAlertDialog from './FailedGameAlertDialog.vue'
@@ -482,34 +483,50 @@ const dealFloatFixed = (val, fixed = 2) => {
 
 // 初始化游戏
 const initGame = () => {
-  console.log(localStorage.getItem("gameMain"));
+  // console.log(localStorage.getItem("gameMain"));
   if (localStorage.getItem("gameMain") && localStorage.getItem("gameMain") !== 'undefined') {
     gameMain.value = JSON.parse(localStorage.getItem("gameMain"))
     // console.log(localStorage.getItem("gameMain"));
     if (!gameMain.value.auto.percentages) gameMain.value.auto.percentages = Object.values(percentages)
     if (!gameMain.value.auto.floorLimit) gameMain.value.auto.floorLimit = 5
     if (gameMain.value.player.allocated) {
+      resetOpenCfg()
       GameBeginSetConfigOpen.value = false
       coverLoading.value = false
       gameMainLoading.value = false
       gameWindowLoading.value = true
-      enterDungeon(gameMain.value);
-      if (gameMain.value.map.enemyBattleList.length && gameMain.value.combat.enemyCurrId > -1) {
-        combatOpen.value = true
-        if (gameMain.value.player.inCombat) {
-          startCombat(gameMain.value);
+      gameMain.value.player.inCombat = false
+      gameMain.value.map.backlog.length = 0
+      gameMain.value.map.dungeonAction = "休息中";
+      gameMain.value.map.dungeonActivity = "探索";
+      gameMain.value.map.status.exploring = false;
+      gameMain.value.map.status.paused = true;
+      gameMain.value.map.status.event = false
+      gameMain.value.map.status.eventType = ''
+      gameMain.value.map.enemyBattleList.length = 0
+      gameMain.value.combat = {
+        combatSeconds: 0,
+        combatTimer: null,
+        enemyCurrId: -1,
+        combatBacklog: [],
+        combatLoot: [],
+      }
+      const lastUpdateTime = localStorage.getItem("lastUpdateTime")
+      if (lastUpdateTime) {
+        // 距离上次保存，每分钟回复1%血量
+        const min = dayjs().diff(dayjs(lastUpdateTime), 'minutes')
+        if (min > 0) {
+          gameMain.value.player.stats.hp += parseInt(gameMain.value.player.stats.hpMax * min * 0.01)
+          playerLoadStats(gameMain.value)
         }
       }
+      enterDungeon(gameMain.value);
     } else {
       GameBeginSetConfigOpen.value = false
       coverLoading.value = true
       gameMainLoading.value = false
       gameWindowLoading.value = false
     }
-    // // 创建并加载地图
-    // let map = initialDungeonLoad(gameMain.value)
-    // // 加载玩家属性
-    // playerLoadStats(gameMain.value)
 
     watchEffect(() => {
       if (gameMain.value) {
