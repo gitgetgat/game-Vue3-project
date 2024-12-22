@@ -1,6 +1,7 @@
 <template>
   <div class="flex items-center justify-between mb-2 h-fit w-full">
     <div class="py-2">{{dungeonTime}}</div>
+    <div class="py-2"><span style="color:#fde047">祝福Lv.{{ gameMain.player.blessing }}</span> / <span style="color:#e30b5c">诅咒Lv.{{ Math.round((gameMain.map.settings.enemyScaling - 1) * 10) }}</span></div>
     <div class="py-2 flex items-center">层数 {{ gameMain.map.progress.floor }}<Popover>
         <PopoverTrigger as-child>
           <Button

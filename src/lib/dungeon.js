@@ -593,7 +593,7 @@ const cursedTotem = (gameMain) => {
   const { map } = gameMain
   const curseLvl = Math.round((map.settings.enemyScaling - 1) * 10)
   map.settings.enemyScaling += 0.1;
-  addDungeonLog(map, `地下城中的怪物变得更强，战利品质量也提高了. (诅咒 Lv.${curseLvl} > 诅咒 Lv.${curseLvl + 1})`);
+  addDungeonLog(map, `<span style="color:#e30b5c">地下城中的怪物变得更强，战利品质量也提高了. (诅咒 Lv.${curseLvl} > 诅咒 Lv.${curseLvl + 1})</span>`);
   saveData(gameMain);
 }
 // 计算祝福升级需要的金钱
